@@ -1,6 +1,6 @@
 {
-  "version": "1.0",
-  "note": "Lexicon used by humanize.py and detect.py. Replacements are plain-English and keep the sentence grammatical. The last block of each list is Instagram-specific: caption and voiceover slop that does not show up on other platforms. Edit freely - it is meant to be yours.",
+  "version": "1.1-fa",
+  "note": "Lexicon used by humanize.py and detect.py. Replacements are plain-English and keep the sentence grammatical. The last block of each list is Instagram-specific: caption and voiceover slop that does not show up on other platforms. Edit freely - it is meant to be yours. Entries with \"lang\": \"fa\" are the Persian (Farsi) lexicon. Persian entries contain real half-space characters (U+200C) where Persian spelling needs them; humanize.py matches them whether a writer used a half-space, a space or nothing.",
   "invisible": [
     {
       "cp": "U+200B",
@@ -630,6 +630,102 @@
       "find": "hack",
       "replace": "trick",
       "family": "nouns"
+    },
+    {
+      "find": "می‌باشد",
+      "replace": "است",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "می‌باشند",
+      "replace": "هستند",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "می‌گردد",
+      "replace": "می‌شود",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "گردید",
+      "replace": "شد",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "می‌نماید",
+      "replace": "می‌کند",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "می‌نمایند",
+      "replace": "می‌کنند",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "نموده",
+      "replace": "کرده",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "نمودند",
+      "replace": "کردند",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "اینجانب",
+      "replace": "من",
+      "family": "nouns",
+      "lang": "fa"
+    },
+    {
+      "find": "انقلابی",
+      "replace": "تازه",
+      "family": "adjectives",
+      "lang": "fa"
+    },
+    {
+      "find": "تحول‌آفرین",
+      "replace": "مهم",
+      "family": "adjectives",
+      "lang": "fa"
+    },
+    {
+      "find": "شگفت‌انگیز",
+      "replace": "جالب",
+      "family": "adjectives",
+      "lang": "fa"
+    },
+    {
+      "find": "بی‌نظیر",
+      "replace": "خیلی خوب",
+      "family": "adjectives",
+      "lang": "fa"
+    },
+    {
+      "find": "گیم‌چنجر",
+      "replace": "مهم",
+      "family": "adjectives",
+      "lang": "fa"
+    },
+    {
+      "find": "قدرتمند",
+      "replace": "قوی",
+      "family": "adjectives",
+      "lang": "fa"
+    },
+    {
+      "find": "بی‌شک",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
     }
   ],
   "phrases": [
@@ -922,6 +1018,462 @@
       "find": "go viral overnight",
       "replace": "get reach",
       "family": "nouns"
+    },
+    {
+      "find": "منحصر به فرد",
+      "replace": "خاص",
+      "family": "adjectives",
+      "lang": "fa"
+    },
+    {
+      "find": "بدون شک",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "حائز اهمیت است",
+      "replace": "مهم است",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "حائز اهمیت",
+      "replace": "مهم",
+      "family": "adjectives",
+      "lang": "fa"
+    },
+    {
+      "find": "از اهمیت ویژه‌ای برخوردار است",
+      "replace": "خیلی مهم است",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "از اهمیت بالایی برخوردار است",
+      "replace": "خیلی مهم است",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "اهمیت بسزایی دارد",
+      "replace": "خیلی مهم است",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "نقش بسزایی",
+      "replace": "نقش مهمی",
+      "family": "nouns",
+      "lang": "fa"
+    },
+    {
+      "find": "نقش کلیدی ایفا می‌کند",
+      "replace": "خیلی مهم است",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "نقش مهمی ایفا می‌کند",
+      "replace": "مهم است",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "به طور قابل توجهی",
+      "replace": "خیلی",
+      "family": "adverbs",
+      "lang": "fa"
+    },
+    {
+      "find": "به طور چشمگیری",
+      "replace": "خیلی",
+      "family": "adverbs",
+      "lang": "fa"
+    },
+    {
+      "find": "به شکل چشمگیری",
+      "replace": "خیلی",
+      "family": "adverbs",
+      "lang": "fa"
+    },
+    {
+      "find": "به طرز چشمگیری",
+      "replace": "خیلی",
+      "family": "adverbs",
+      "lang": "fa"
+    },
+    {
+      "find": "لازم به ذکر است که",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "لازم به ذکر است",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "شایان ذکر است که",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "قابل ذکر است که",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "ناگفته نماند که",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "گفتنی است که",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "مهم‌ترین نکته این است که",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "نکته مهم اینجاست که",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "به عبارت دیگر",
+      "replace": "یعنی",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "به بیان دیگر",
+      "replace": "یعنی",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "به عنوان مثال",
+      "replace": "مثلاً",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "همان‌طور که می‌دانید",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "همان‌طور که می‌دانیم",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "همون‌طور که می‌دونید",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "همون‌طور که می‌دونین",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "همون‌طور که می‌دونی",
+      "replace": "",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "در دنیای پرشتاب امروز",
+      "replace": "",
+      "family": "openers",
+      "lang": "fa"
+    },
+    {
+      "find": "در دنیای دیجیتال امروز",
+      "replace": "",
+      "family": "openers",
+      "lang": "fa"
+    },
+    {
+      "find": "در دنیای امروز",
+      "replace": "",
+      "family": "openers",
+      "lang": "fa"
+    },
+    {
+      "find": "در عصر دیجیتال",
+      "replace": "این روزها",
+      "family": "openers",
+      "lang": "fa"
+    },
+    {
+      "find": "در عصر حاضر",
+      "replace": "این روزها",
+      "family": "openers",
+      "lang": "fa"
+    },
+    {
+      "find": "بیایید نگاهی بیندازیم",
+      "replace": "",
+      "family": "openers",
+      "lang": "fa"
+    },
+    {
+      "find": "بیایید با هم ببینیم",
+      "replace": "",
+      "family": "openers",
+      "lang": "fa"
+    },
+    {
+      "find": "بیایید شروع کنیم",
+      "replace": "",
+      "family": "openers",
+      "lang": "fa"
+    },
+    {
+      "find": "بیاین شروع کنیم",
+      "replace": "",
+      "family": "openers",
+      "lang": "fa"
+    },
+    {
+      "find": "بریم که شروع کنیم",
+      "replace": "",
+      "family": "openers",
+      "lang": "fa"
+    },
+    {
+      "find": "در دنیای هوش مصنوعی",
+      "replace": "در هوش مصنوعی",
+      "family": "nouns",
+      "lang": "fa"
+    },
+    {
+      "find": "دنیای هوش مصنوعی",
+      "replace": "هوش مصنوعی",
+      "family": "nouns",
+      "lang": "fa"
+    },
+    {
+      "find": "دنیای تکنولوژی",
+      "replace": "تکنولوژی",
+      "family": "nouns",
+      "lang": "fa"
+    },
+    {
+      "find": "دنیای فناوری",
+      "replace": "فناوری",
+      "family": "nouns",
+      "lang": "fa"
+    },
+    {
+      "find": "قواعد بازی را تغییر می‌دهد",
+      "replace": "خیلی چیزها را عوض می‌کند",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "قوانین بازی رو عوض می‌کنه",
+      "replace": "خیلی چیزها رو عوض می‌کنه",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "به سطح بعدی ببرید",
+      "replace": "بهترش کنید",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "به سطح بعدی ببر",
+      "replace": "بهترش کن",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "در راستای",
+      "replace": "برای",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "به منظور",
+      "replace": "برای",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "در جهت",
+      "replace": "برای",
+      "family": "fillers",
+      "lang": "fa"
+    },
+    {
+      "find": "بهره‌مند شوید",
+      "replace": "استفاده کنید",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "بهره ببرید",
+      "replace": "استفاده کنید",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "آیا تا به حال",
+      "replace": "تا حالا",
+      "family": "openers",
+      "lang": "fa"
+    },
+    {
+      "find": "آیا تا حالا",
+      "replace": "تا حالا",
+      "family": "openers",
+      "lang": "fa"
+    },
+    {
+      "find": "سفر خود را آغاز کنید",
+      "replace": "شروع کنید",
+      "family": "verbs",
+      "lang": "fa"
+    },
+    {
+      "find": "تا انتها با ما همراه باشید",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "با ما همراه باشید",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "امیدوارم این پست برایتان مفید بوده باشد",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "امیدوارم مفید بوده باشد",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "امیدوارم براتون مفید بوده باشه",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "امیدوارم مفید بوده باشه",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "نظرات خود را با ما به اشتراک بگذارید",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "نظرتون رو کامنت کنید",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "نظرت رو کامنت کن",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "نظرتون رو برامون بنویسید",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "برای مطالب بیشتر ما را دنبال کنید",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "ما را دنبال کنید",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "پیج ما رو فالو کنید",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "فالو یادت نره",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "فالو یادتون نره",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "پس منتظر چه هستید",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "پس منتظر چی هستی",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "منتظر چه هستید",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "منتظر چی هستی",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
+    },
+    {
+      "find": "منتظر چی هستین",
+      "replace": "",
+      "family": "closers",
+      "lang": "fa"
     }
   ],
   "structures": [
@@ -969,9 +1521,9 @@
     },
     {
       "id": "hashtag-wall",
-      "regex": "(?:#\\w+[ \\t]*){5,}",
-      "name": "Hashtag wall (5+)",
-      "fix": "Three hashtags. LinkedIn stopped rewarding the wall."
+      "regex": "(?:#\\w+[ \\t]*){6,}",
+      "name": "Hashtag wall (6+)",
+      "fix": "Instagram caps a post at five hashtags. Past that the tags do not count and the block reads as old."
     },
     {
       "id": "as-an-ai",
@@ -1020,6 +1572,97 @@
       "regex": "(?i)\\b(?:follow for more|tag someone who|double tap if|share this if|comment below if)\\b",
       "name": "Reflex follow or tag bait",
       "fix": "Ask for the one action this post actually earns. The generic ask trains the audience to ignore every ask."
+    },
+    {
+      "id": "not-just-fa",
+      "regex": "(?:فقط|صرفاً|صرفا|تنها)\\s[^.!?؟\\n]{1,50}?\\sنیست[،,]",
+      "name": "«X فقط یک ... نیست، ...» (\"It's not just X\")",
+      "fix": "Say the one thing you actually mean. Delete the setup half.",
+      "lang": "fa"
+    },
+    {
+      "id": "not-only-fa",
+      "regex": "نه(?:\\u200c| )?تنها[^.!?؟\\n]{2,80}بلکه",
+      "name": "«نه تنها ... بلکه ...» (\"Not only X but also Y\")",
+      "fix": "Split into two sentences, or drop the weaker half.",
+      "lang": "fa"
+    },
+    {
+      "id": "isnt-about-fa",
+      "regex": "(?:موضوع|بحث|مسئله|مساله)\\s[^.!?؟\\n]{2,40}\\sنیست[،,.]\\s*(?:موضوع|بحث|مسئله|مساله)",
+      "name": "«موضوع X نیست، موضوع Y است» (\"It isn't about X\")",
+      "fix": "Lead with Y. The reversal is the tell.",
+      "lang": "fa"
+    },
+    {
+      "id": "the-result-fa",
+      "regex": "(?m)^\\s*(?:نتیجه(?:\\u200c| )?(?:اش)?|نکته جالب|بهترین بخش|اما نکته|حالا نکته)\\s*[؟?]\\s*$",
+      "name": "One-word rhetorical question line («نتیجه؟»)",
+      "fix": "Answer it inline instead of staging a reveal.",
+      "lang": "fa"
+    },
+    {
+      "id": "heres-what-fa",
+      "regex": "(?:چیزهایی|چیزایی|درس(?:\\u200c| )?هایی)\\sکه\\s(?:یاد\\sگرفتم|آموختم)",
+      "name": "«چیزهایی که یاد گرفتم» (\"Here's what I learned\")",
+      "fix": "State the lesson. Skip the announcement.",
+      "lang": "fa"
+    },
+    {
+      "id": "triad-fa",
+      "regex": "[^\\s،,.!؟]+، [^\\s،,.!؟]+ و [^\\s،,.!؟]+[.!؟]",
+      "name": "Rule-of-three triad («سریع، ساده و رایگان.»)",
+      "fix": "Two items or four. Three is the model's default rhythm.",
+      "lang": "fa"
+    },
+    {
+      "id": "as-an-ai-fa",
+      "regex": "به(?:\\u200c| )?عنوان\\s(?:یک\\s|یه\\s)?(?:هوش\\sمصنوعی|مدل\\sزبانی|دستیار)",
+      "name": "Model self-reference («به عنوان یک هوش مصنوعی»)",
+      "fix": "Delete the sentence.",
+      "lang": "fa"
+    },
+    {
+      "id": "in-summary-fa",
+      "regex": "(?m)^\\s*(?:در\\s(?:پایان|نهایت|جمع(?:\\u200c| )?بندی|یک\\sکلام)|به(?:\\u200c| )?طور\\sخلاصه|خلاصه\\s(?:اینکه|این(?:\\u200c| )?که|کلام)|در\\sکل)",
+      "name": "Essay-closer opener («در پایان»، «به طور خلاصه»)",
+      "fix": "A post does not need a conclusion paragraph.",
+      "lang": "fa"
+    },
+    {
+      "id": "hype-question-fa",
+      "regex": "آیا\\s(?:آماده(?:\\u200c| )?(?:اید|ای|این)|می(?:\\u200c| )?(?:دانستید|دونستید|دونستی))",
+      "name": "«آیا آماده‌اید / آیا می‌دانستید» opener",
+      "fix": "Say the thing you were going to reveal. The rhetorical question is pure setup.",
+      "lang": "fa"
+    },
+    {
+      "id": "engagement-bait-fa",
+      "regex": "(?m)(?:موافقی|موافقید|موافقین|نظرت\\sچیه|نظرتون\\sچیه|نظر\\sشما\\sچیست|کی\\sدیگه|اشتباه\\sمی(?:\\u200c| )?کنم)\\s*[؟?]\\s*$",
+      "name": "Reflex engagement bait («موافقی؟»، «نظرت چیه؟»)",
+      "fix": "Ask a question only you could ask, about the specific thing above it.",
+      "lang": "fa"
+    },
+    {
+      "id": "stop-scroll-fa",
+      "regex": "(?m)^\\s*(?:اسکرول\\sنکن(?:ید|ین)?|رد\\sنشو|رد\\sنشید|صبر\\sکن[،,!]?\\s*(?:اسکرول|رد))",
+      "name": "«اسکرول نکن» opener (\"Stop scrolling\")",
+      "fix": "The scroll-stop has to be the claim itself. Asking for attention is the tell that you have not earned it.",
+      "lang": "fa"
+    },
+    {
+      "id": "in-this-video-fa",
+      "regex": "(?:(?:تو|توی|در)\\s(?:این|اين)\\s(?:ویدیو|ویدئو|ریلز|ریل|پست|کلیپ|مقاله)|امروز\\s(?:می(?:\\u200c| )?(?:خوام|خواهم)|قراره)|(?:می(?:\\u200c| )?خوام|قراره)\\s(?:بهتون|به\\sشما|بهت)\\s(?:نشون|یاد|بگم))",
+      "name": "Video preamble («تو این ویدیو»، «امروز می‌خوام»)",
+      "fix": "Delete it and start at the payoff. The first two seconds decide the whole reel.",
+      "lang": "fa"
+    },
+    {
+      "id": "follow-bait-fa",
+      "regex": "(?:فالو(?:مون)?\\s?(?:کن|کنید|کنین|یادت\\sنره|یادتون\\sنره)|پیج(?:مون)?\\s?(?:رو|را)\\s?فالو|ما\\sرا\\sدنبال\\sکنید|تگ\\s?(?:کن|کنید|کنین)|منشن\\s?(?:کن|کنید|کنین)|لایک\\s?(?:کن|کنید|کنین|یادت\\sنره|یادتون\\sنره)|دابل\\s?تپ)",
+      "name": "Reflex follow, tag or like bait («فالو یادت نره»)",
+      "fix": "Ask for the one action this post actually earns. The generic ask trains the audience to ignore every ask.",
+      "lang": "fa"
     }
   ]
 }

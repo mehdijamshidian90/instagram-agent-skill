@@ -80,3 +80,16 @@ is usually a grid, a story habit and a pinned post that does not exist yet.
 None of that is a rewrite.
 
 Nothing is saved to Instagram by this skill. The user edits each field.
+
+## Persian (Farsi) accounts
+
+If `voice.md` says the account writes in Persian, follow the Persian rules in
+its **Language** section (register, half-spaces, direction, digits, quotes),
+then these, which are specific to this skill:
+
+- The Name field is searchable. Put the Persian term people actually type for
+  the niche in it (for example "هوش مصنوعی"), next to the real name.
+- The bio follows the direction rule: no line starts or ends with an English
+  word, and the link line goes last.
+- Score Persian bios with the same rubric. "Clear in one read" means clear to
+  someone reading it in Persian, not a translated English bio.

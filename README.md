@@ -1,5 +1,13 @@
 # The Instagram agent skill
 
+> **Persian (Farsi) fork.** Same thirteen skills and five tools, plus Persian
+> support: the humanizer keeps half-spaces and direction marks instead of
+> deleting them, every tool tokenises and scores Persian, `slop.json` has a
+> Persian block, all 26 hook formulas have Persian templates and match
+> patterns, and `caption.py` catches the Persian line-direction bug. English
+> behaviour is unchanged (`tests/test_persian.py` checks it against the numbers
+> below). [راهنمای فارسی](README.fa.md)
+
 Thirteen Claude skills that run an Instagram account. Free, MIT, no signup, no
 API key, nothing to connect.
 
@@ -22,7 +30,7 @@ see it.
 Paste this into Claude:
 
 ```
-https://github.com/Jakeschincariol/instagram-agent-skill
+https://github.com/mehdijamshidian90/instagram-agent-skill
 
 Install this skill, then confirm /ig-reel works.
 ```
@@ -30,14 +38,14 @@ Install this skill, then confirm /ig-reel works.
 Or do it yourself, in Claude Code:
 
 ```bash
-git clone https://github.com/Jakeschincariol/instagram-agent-skill.git
+git clone https://github.com/mehdijamshidian90/instagram-agent-skill.git
 cp -r instagram-agent-skill/skills/ig-* ~/.claude/skills/
 ```
 
 Or as a plugin:
 
 ```
-/plugin marketplace add Jakeschincariol/instagram-agent-skill
+/plugin marketplace add mehdijamshidian90/instagram-agent-skill
 /plugin install instagram-agent
 ```
 
@@ -323,7 +331,10 @@ skills/ig-human/humanize.py        the three cleaning passes
 skills/ig-human/detect.py          the five-check panel
 skills/ig-viral/swipe.py           outlier ranking and formula classification
 skills/ig-profile/rubric.json      the 100-point profile score
+skills/*/persian.py                Persian normalisation, tokenising and half-space
+                                   rules (identical copies, one per tool folder)
 templates/voice.md                 your voice profile. Fill this in first.
+tests/test_persian.py              Persian behaviour and English regression tests
 ```
 
 ## Credit

@@ -23,6 +23,14 @@ Instagram shows it to. Trust the retention graph over this script.
 
 Each check returns 0 to 100. Higher is better.
 
+Persian (Farsi) hooks are detected automatically and scored with Persian word
+lists: spoken numbers and money words, stakes and negation (any "نمی..." verb
+counts), weak openers like "سلام" and "امروز می‌خوام", second-person address,
+and Latin-script names (ChatGPT, iPhone) as the concrete marker Persian has
+no capital letters for. The English thresholds were measured; the Persian
+word lists were not, so treat Persian scores as the same kind of filter -
+good at catching the weak hook, silent on which decent hook wins.
+
 Usage
   python3 hookscore.py hooks.txt              # one hook per line, ranked
   python3 hookscore.py --hook "I lost $18,000 on one missing contract."
@@ -33,8 +41,12 @@ Usage
 import argparse
 import json
 import re
+import os
 import statistics
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import persian  # noqa: E402
 
 WORD_RE = re.compile(r"[A-Za-z0-9$%'’-]+")
 NUMBER_RE = re.compile(
@@ -109,12 +121,78 @@ DEALBREAKERS = [
 ]
 
 
+# ---------------------------------------------------------------- Persian --
+# All Persian lists are in normalised form (see persian.normalize): no
+# half-spaces, Persian yeh and kaf, "می" joined to its verb. Write new entries
+# the same way: "میخوام", not "می‌خوام".
+
+FA_STAKES = {
+    "نه", "نکن", "نکنید", "نکنین", "هیچوقت", "هرگز", "هیچکس", "هیچکی", "هیچ",
+    "ولی", "اما", "جز", "بدون", "فقط", "هنوز", "قبل", "قبلش", "بجای", "بهجای",
+    "کاش", "نباید", "باید", "اصلا", "واقعا", "واقعیت", "حقیقت", "راز", "رازی",
+    "مخفی", "پنهان", "رایگان", "مجانی", "اولین", "آخرین", "بدترین", "بهترین",
+    "یعنی", "وگرنه", "تقلب", "دروغ", "ممنوع", "غیرقانونی", "جریمه",
+}
+# Stems: a token that starts with one of these counts, so "اشتباهی",
+# "اشتباهاتی" and "اشتباهمو" all land.
+FA_STAKE_STEMS = (
+    "اشتباه", "غلط", "ضرر", "باخت", "هزینه", "گرون", "گران", "اخراج", "حذف",
+    "پاکش", "جایگزین", "شکست", "ورشکست", "خراب", "متنفر", "کلاهبردار", "مشکل",
+    "خطر", "هشدار", "پشیمون", "پشیمان", "دزد", "هدر", "سوخت", "پولم", "پولت",
+    "بلاک", "بن", "ریجکت", "رد شد",
+)
+FA_WEAK_OPENERS = [
+    "سلام", "درود", "دوستان", "بچهها", "رفقا", "خب", "خوب", "امروز", "ببین",
+    "ببینید", "گوش", "راستش", "یعنی", "اوکی", "بریم", "بیاین", "بیایید",
+    "میخوام", "میخواهم", "تو این", "توی این", "در این", "یکی از", "آیا",
+    "تا حالا", "این یه", "این یک", "وقتی", "اگه شما", "میدونی", "میدونستی",
+    "همونطور", "همانطور", "خیلیها", "خیلی از", "بذارید", "بزارید", "بذار",
+    "هی", "های", "خوش اومدین", "خوش آمدید",
+]
+FA_IMPERATIVES = {
+    "نکن", "نکنید", "نکنین", "نزن", "ننویس", "نخر", "نخرید", "بخر", "بخرید",
+    "بساز", "بسازید", "بنویس", "بنویسید", "بفرست", "بفرستید", "بگیر", "بگیرید",
+    "بخون", "بخوانید", "بزن", "بزنید", "ببین", "ببینید", "امتحان", "کپی",
+    "پاک", "سیو", "ذخیره", "استفاده", "شروع", "ول", "چک", "هیچوقت", "همیشه",
+    "دانلود", "نصب", "بدزد", "بدزدید",
+}
+FA_SECOND = {"شما", "تو", "خودت", "خودتون", "بهت", "بهتون", "برات", "براتون",
+             "باهات", "باهاتون", "ازت", "ازتون"}
+FA_FIRST = {"من", "ما", "خودم", "خودمون", "برام", "بهم", "بهمون", "ازم"}
+FA_SECOND_VERB = re.compile("^ن?(?:می)?[\u0622-\u06cc]{1,10}(?:ی|ین|ید)$")
+FA_FIRST_VERB = re.compile("^ن?می[\u0622-\u06cc]{1,10}(?:م|یم)$")
+FA_NUM_RE = re.compile(r"\d[\d,.]*\s?%?")
+
+FA_DEALBREAKERS = [
+    (re.compile(r"^\s*(?:اسکرول نکن|رد نشو|رد نشید|صبر کن)"),
+     "Opens with \"اسکرول نکن\". Asking for attention proves you have not earned it."),
+    (re.compile(r"(?:(?:تو|توی|در) این (?:ویدیو|ویدئو|ریلز|ریل|پست|کلیپ)"
+                r"|امروز (?:میخوام|میخواهم|قراره)"
+                r"|(?:میخوام|قراره) (?:بهتون|به شما|بهت) (?:نشون|یاد|بگم))"),
+     "Video preamble (\"تو این ویدیو\", \"امروز می‌خوام\"). Delete it and open on the payoff."),
+    (re.compile(r"^\s*(?:سلام|درود|هی|های|خوش اومدین|خوش آمدید|دوستان|بچهها)(?![\u0600-\u06ff])"),
+     "Greeting. Nobody came to the feed to be greeted."),
+]
+
+
+def _fa_is_stake(k):
+    return (k in FA_STAKES or k.startswith("نمی") or k.startswith("نکرد")
+            or any(k.startswith(st) for st in FA_STAKE_STEMS))
+
+
+def _fa_is_payload(k, raw):
+    return (_fa_is_stake(k) or k in persian.SPOKEN_NUMBERS or k in persian.MONEY_WORDS
+            or bool(re.match(r"\d", k)) or bool(re.match(r"[A-Za-z]{3,}|[A-Za-z]+\d", raw)))
+
+
 def clamp(n):
     return max(0.0, min(100.0, n))
 
 
 def words(text):
     # "$18,000" is one word when it is spoken, so it is one word here too.
+    if persian.is_persian(text):
+        return persian.words(text)
     return WORD_RE.findall(re.sub(r"(?<=\d),(?=\d)", "", text))
 
 
@@ -137,6 +215,12 @@ def check_length(text):
 
 def check_specificity(text):
     """One concrete thing beats three abstract ones."""
+    if persian.is_persian(text):
+        found = persian.concrete_markers(text)
+        hits = len(found)
+        score = 15.0 if hits == 0 else clamp(45 + hits * 30)
+        return score, (f"{hits} concrete marker(s)" + (f": {', '.join(found[:4])}" if found else
+                       " - no number, no name, nothing checkable"))
     nums = [n.strip() for n in NUMBER_RE.findall(text) if n.strip()]
     propers = set(PROPER_RE.findall(text))
     low = [w.lower().strip("'’") for w in words(text)]
@@ -150,6 +234,16 @@ def check_specificity(text):
 
 def check_stakes(text):
     """Tension, cost, negation. Something the viewer might lose."""
+    if persian.is_persian(text):
+        keys = persian.norm_words(text)
+        markers = sorted({k for k in keys if _fa_is_stake(k)})
+        flat = persian.normalize(text)
+        if re.search(r"\$\s?\d|\d[\d,.]*\s?(?:تومن|تومان|دلار|میلیون)", flat):
+            markers.append("a price")
+        n = len(markers)
+        score = {0: 20.0, 1: 70.0}.get(n, 100.0)
+        return score, f"{n} tension marker(s)" + (f": {', '.join(markers[:4])}" if markers else
+                                                  " - nothing is at stake in this line")
     w = [x.lower().strip("'’") for x in words(text)]
     hits = [x for x in w if x in STAKES]
     markers = sorted(set(hits))
@@ -167,17 +261,23 @@ def check_frontload(text):
     w = words(text)
     if not w:
         return 0.0, "empty"
-    low = [x.lower().strip("'’") for x in w]
+    fa = persian.is_persian(text)
+    low = persian.norm_words(text) if fa else [x.lower().strip("'’") for x in w]
     opener = " ".join(low[:2])
     penalty = 0
     hit_opener = None
-    for weak in WEAK_OPENERS:
-        if opener.startswith(weak) or low[0] == weak:
+    for weak in (FA_WEAK_OPENERS if fa else WEAK_OPENERS):
+        if opener == weak or opener.startswith(weak + " ") or low[0] == weak \
+                or (not fa and opener.startswith(weak)):
             penalty, hit_opener = 30, weak
             break
     payload = None
     for i, token in enumerate(low):
-        if (token in STAKES or token in SPOKEN_NUMBERS or token in MONEY_WORDS
+        if fa:
+            if _fa_is_payload(token, w[i]):
+                payload = i
+                break
+        elif (token in STAKES or token in SPOKEN_NUMBERS or token in MONEY_WORDS
                 or NUMBER_RE.match(w[i]) or (i and PROPER_RE.match(w[i]))):
             payload = i
             break
@@ -199,6 +299,19 @@ def check_frontload(text):
 
 def check_address(text):
     """Aimed at one viewer, or floating in the air."""
+    if persian.is_persian(text):
+        keys = persian.norm_words(text)
+        if any(k in FA_SECOND or (k not in persian.NOT_MI_VERB and FA_SECOND_VERB.match(k)
+                                  and (k.startswith("می") or k.startswith("نمی")))
+               or (len(k) >= 5 and (k.endswith("تون") or k.endswith("تو"))) for k in keys):
+            return 100.0, "speaks to the viewer"
+        if keys and keys[0] in FA_IMPERATIVES:
+            return 90.0, f"imperative opener (\"{keys[0]}\")"
+        if any(k in FA_FIRST or FA_FIRST_VERB.match(k)
+               or (k not in persian.NOT_FIRST_PERSON and persian.PAST_FIRST_RE.match(k))
+               for k in keys):
+            return 70.0, "first person, no viewer named"
+        return 35.0, "third person, nobody in the room"
     low = text.lower()
     w = [x.lower().strip("'’") for x in words(text)]
     if re.search(r"\b(you|your|you're|youre|yourself)\b", low):
@@ -222,6 +335,9 @@ def run(text):
         "ADDRESS": check_address(text),
     }
     flags = [msg for pattern, msg in DEALBREAKERS if pattern.search(text)]
+    if persian.is_persian(text):
+        flat = persian.normalize(text)
+        flags += [msg for pattern, msg in FA_DEALBREAKERS if pattern.search(flat)]
     scores = [results[c][0] for c in CHECKS]
     # The weakest property caps the hook, same logic as detect.py: one bad
     # property is enough for the thumb to keep moving.

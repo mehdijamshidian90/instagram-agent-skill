@@ -102,3 +102,13 @@ DO MORE: the ones with a cost you paid and a number attached.
 Then hand the conclusions to `/ig-plan` so next week is built on the user's own
 evidence rather than on defaults, and to `/ig-viral` so the swipe file gets
 filtered to the formulas that work for this account specifically.
+
+## Persian (Farsi) accounts
+
+If `voice.md` says the account writes in Persian, follow the Persian rules in
+its **Language** section (register, half-spaces, direction, digits, quotes),
+then these, which are specific to this skill:
+
+- `hookscore.py` scores Persian hooks in the audit table the same way. Compare
+  Persian hooks with Persian hooks: an account that posts in both languages
+  needs two baselines, because the audiences are different sizes.

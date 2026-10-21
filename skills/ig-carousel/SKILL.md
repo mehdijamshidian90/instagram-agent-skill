@@ -101,3 +101,17 @@ Caption: Job B, hook in line 1, one ask, 3 tags.
 ```
 
 Nothing is uploaded. The user posts it.
+
+## Persian (Farsi) accounts
+
+If `voice.md` says the account writes in Persian, follow the Persian rules in
+its **Language** section (register, half-spaces, direction, digits, quotes),
+then these, which are specific to this skill:
+
+- Persian slides are right-aligned and read right to left. Lay out any visual
+  sequence inside a slide (steps, arrows, before/after) in that order too.
+- A slide line that starts with an English word breaks direction the same way
+  a caption line does. Put the Persian word first.
+- Use a Persian font that renders half-spaces correctly; test "می‌خوام" and
+  "کتاب‌ها" on the cover before exporting all ten.
+- Use the same digits on every slide: all Persian (۱۲۳) or all Latin (123).

@@ -116,3 +116,17 @@ Then stop. A third converts nobody and costs the relationship.
 The message, the character count, and the two follow-ups with the day each
 goes out, all run through `/ig-human`. The user sends every one of them by
 hand, or through their own approved automation for keyword replies only.
+
+## Persian (Farsi) accounts
+
+If `voice.md` says the account writes in Persian, follow the Persian rules in
+its **Language** section (register, half-spaces, direction, digits, quotes),
+then these, which are specific to this skill:
+
+- First message to someone you do not know: "شما", not "تو", unless their
+  own content clearly uses "تو" with its audience. Moving from "شما" to "تو"
+  is the other person's call.
+- Keep the first message colloquial but polite: "سلام [اسم]، ..." is fine;
+  stacked courtesies ("ارادتمندم", "با سلام و احترام فراوان") read as a
+  template.
+- A keyword delivery in Persian still sends the thing first, in message one.

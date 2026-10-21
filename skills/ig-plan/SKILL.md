@@ -98,3 +98,16 @@ Say "write Tuesday" and I will draft it.
 Write the plan to `~/.claude/instagram/plan.md` so the other skills can read
 it. Nothing is scheduled or posted anywhere. This is a plan and the user runs
 it.
+
+## Persian (Farsi) accounts
+
+If `voice.md` says the account writes in Persian, follow the Persian rules in
+its **Language** section (register, half-spaces, direction, digits, quotes),
+then these, which are specific to this skill:
+
+- Posting times come from Insights, not from defaults. A Persian audience may
+  be in Iran (UTC+3:30), in the diaspora, or both, and the right hour is
+  different for each.
+- Seasonal moments for a Persian audience: Nowruz, Yalda, the start of the
+  school year in Mehr, Black Friday sales for tech. Plan around the ones that
+  fit the niche, not all of them.

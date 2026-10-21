@@ -7,6 +7,12 @@ detectors actually measure - sentence-length variation, concreteness, stock
 vocabulary, typographic fingerprint, and voice. Every score is computed on
 your machine from the text alone. Nothing is uploaded.
 
+Persian (Farsi) drafts are detected automatically. Words are split without
+breaking at the half-space, Persian digits and number words count as
+concrete, Latin-script product names count as names (Persian has no capital
+letters to find them by), the spoken register stands in for contractions,
+and half-spaces and direction marks are not counted as fingerprint.
+
 What this is NOT:  GPTZero, Originality, Copyleaks, Winston or Turnitin.
 It does not call their APIs and it cannot promise their verdict. It catches
 the things they all key on, which is why fixing them tends to move their
@@ -30,9 +36,12 @@ import sys
 import unicodedata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import persian  # noqa: E402
+
 LEX = os.path.join(HERE, "slop.json")
 
-SENT_RE = re.compile(r"[^.!?\n]+[.!?]*")
+SENT_RE = persian.SENT_RE
 WORD_RE = re.compile(r"[A-Za-z']+")
 CONTRACTIONS = re.compile(r"\b\w+'(?:s|t|re|ve|ll|d|m)\b", re.IGNORECASE)
 PRONOUNS = re.compile(r"\b(i|me|my|mine|we|us|our|you|your)\b", re.IGNORECASE)
@@ -56,6 +65,8 @@ def sentences(text):
 
 
 def words(text):
+    if persian.is_persian(text):
+        return persian.words(text)
     return WORD_RE.findall(text)
 
 
@@ -76,7 +87,13 @@ def check_specificity(text):
     if len(w) < 25:
         return 50.0, "too short to judge"
     per100 = 100 / len(w)
-    hits = len(NUMBERS.findall(text)) + len(set(PROPER.findall(text)))
+    if persian.is_persian(text):
+        # No capital letters in Persian. Numbers (Persian digits included),
+        # spoken number words, @handles and the Latin-script names of tools
+        # and products carry the concreteness instead.
+        hits = len(persian.concrete_markers(text))
+    else:
+        hits = len(NUMBERS.findall(text)) + len(set(PROPER.findall(text)))
     density = hits * per100
     score = scale(density, human=6.0, machine=0.5)
     return score, f"{hits} concrete markers, {density:.1f} per 100 words (want 4+)"
@@ -89,8 +106,7 @@ def check_slop(text, lex):
         return 50.0, "empty"
     hits, found = 0, []
     for entry in lex["words"] + lex["phrases"]:
-        pattern = re.compile(r"\b" + re.escape(entry["find"]).replace(r"\ ", r"\s+") + r"\b",
-                             re.IGNORECASE)
+        pattern = persian.phrase_re(entry["find"])
         n = len(pattern.findall(text))
         if n:
             hits += n
@@ -105,7 +121,10 @@ def check_slop(text, lex):
 
 def check_fingerprint(text):
     """Characters a phone keyboard does not produce."""
-    invisible = sum(1 for c in text if unicodedata.category(c) == "Cf")
+    # A Persian half-space or a direction mark in right-to-left text is
+    # spelling, not a fingerprint. Only the format characters doing no job count.
+    invisible = sum(1 for i, c in enumerate(text)
+                    if unicodedata.category(c) == "Cf" and not persian.keep_invisible(text, i))
     em = text.count("—")
     curly = sum(text.count(c) for c in "‘’“”")
     ellip = text.count("…")
@@ -124,8 +143,15 @@ def check_voice(text, lex):
     if len(w) < 25:
         return 50.0, "too short to judge"
     per100 = 100 / len(w)
-    contractions = len(CONTRACTIONS.findall(text)) * per100
-    person = len(PRONOUNS.findall(text)) * per100
+    fa = persian.is_persian(text)
+    if fa:
+        # Persian has no contractions. Its equivalent is the spoken register:
+        # "می‌خوام" for "می‌خواهم", "رو" for "را", "یه" for "یک".
+        contractions = persian.colloquial_count(text) * per100
+        person = persian.personal_count(text) * per100
+    else:
+        contractions = len(CONTRACTIONS.findall(text)) * per100
+        person = len(PRONOUNS.findall(text)) * per100
     tells = 0
     names = []
     for s in lex["structures"]:
@@ -144,8 +170,8 @@ def check_voice(text, lex):
     if uniform:
         score -= 12
         names.append("uniform-bullets")
-    detail = (f"{contractions:.1f} contractions, {person:.1f} personal pronouns "
-              f"per 100 words, {tells} structural tell(s)")
+    detail = (f"{contractions:.1f} {'colloquial forms' if fa else 'contractions'}, "
+              f"{person:.1f} personal pronouns per 100 words, {tells} structural tell(s)")
     if names:
         detail += " [" + ", ".join(names[:4]) + "]"
     return clamp(score), detail
@@ -216,7 +242,7 @@ def main():
         })
 
     if args.json:
-        print(json.dumps(payload if args.compare else payload[0], indent=2))
+        print(json.dumps(payload if args.compare else payload[0], indent=2, ensure_ascii=False))
         return
 
     for (name, text), p in zip(targets, payload):

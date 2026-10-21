@@ -13,6 +13,13 @@ are close enough to plan an edit and not a substitute for recording it. Set
 your own rate with --wpm once you have timed yourself reading a script out
 loud: most people land between 150 and 200, and the default here is 165.
 
+Persian (Farsi) scripts work the same way. Words are counted without
+splitting at the half-space, Persian digits and number words count as
+concrete, Latin-script names count as names, and the loop check ignores
+Persian stopwords. Spoken Persian runs at a similar words-per-minute to
+English when a half-space word counts as one word, but time yourself once
+and pass --wpm: it is the only number in here that is about you.
+
 Usage
   python3 beats.py script.txt
   python3 beats.py script.txt --target 30
@@ -23,11 +30,15 @@ Usage
 
 import argparse
 import json
+import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import persian  # noqa: E402
+
 WORD_RE = re.compile(r"[A-Za-z0-9$%'’-]+")
-SENT_RE = re.compile(r"[^.!?]+[.!?]*")
+SENT_RE = re.compile(r"[^.!?؟]+[.!?؟]*")
 CONCRETE_RE = re.compile(r"\$\s?\d|\b\d[\d,.]*\b|(?<!^)\b[A-Z][a-z]{2,}\b", re.MULTILINE)
 STOPWORDS = {
     "the", "a", "an", "and", "or", "but", "if", "of", "to", "in", "on", "for",
@@ -35,6 +46,14 @@ STOPWORDS = {
     "you", "your", "i", "my", "me", "we", "our", "they", "them", "he", "she",
     "so", "just", "not", "no", "do", "did", "does", "have", "has", "had",
     "will", "can", "at", "as", "by", "from", "out", "up", "off", "one", "all",
+}
+# Persian stopwords, in normalised form (no half-spaces), for the loop check.
+FA_STOPWORDS = {
+    "و", "در", "به", "از", "که", "این", "اون", "آن", "را", "رو", "با", "برای",
+    "تا", "یه", "یک", "هم", "من", "تو", "ما", "شما", "است", "هست", "بود", "ها",
+    "چی", "چه", "اگه", "اگر", "یا", "ولی", "اما", "هر", "همه", "خیلی", "کرد",
+    "کن", "شد", "داره", "دارم", "اینو", "اونو", "بهت", "بهتون", "هستش", "نه",
+    "آره", "خب", "دیگه", "الان", "میشه", "باید", "فقط", "اینجا", "اونجا",
 }
 
 HOOK_WINDOW = 3.0        # seconds. Past this, the thumb has already decided.
@@ -44,7 +63,21 @@ ABSTRACT_RUN = 3         # beats in a row with nothing checkable in them.
 
 def words(text):
     # "$18,000" is one word when it is spoken, so it is one word here too.
+    if persian.has_rtl(text):
+        return persian.words(text)
     return WORD_RE.findall(re.sub(r"(?<=\d),(?=\d)", "", text))
+
+
+def concrete(text):
+    if persian.has_rtl(text):
+        return len(persian.concrete_markers(text))
+    return len(CONCRETE_RE.findall(text))
+
+
+def loop_keys(text):
+    if persian.has_rtl(text):
+        return {k for k in persian.norm_words(text) if k not in FA_STOPWORDS and len(k) > 1}
+    return {w.lower() for w in words(text) if w.lower() not in STOPWORDS}
 
 
 def pretty(token):
@@ -98,7 +131,7 @@ def analyse(raw, wpm=165, target=None):
             "dur": round(dur, 2),
             "words": n,
             "text": text,
-            "concrete": len(CONCRETE_RE.findall(text)),
+            "concrete": concrete(text),
             "label": "",
             "flags": [],
         })
@@ -146,8 +179,8 @@ def analyse(raw, wpm=165, target=None):
             run, start = 0, None
 
     # Does the last line hand you back to the first one?
-    first = {w.lower() for w in words(rows[0]["text"]) if w.lower() not in STOPWORDS}
-    last = {w.lower() for w in words(rows[-1]["text"]) if w.lower() not in STOPWORDS}
+    first = loop_keys(rows[0]["text"])
+    last = loop_keys(rows[-1]["text"])
     loop = sorted(pretty(w) for w in first & last)
     if loop:
         notes.append(f"Loops: the last beat repeats \"{', '.join(loop[:3])}\" from the hook. "

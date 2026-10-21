@@ -176,3 +176,20 @@ Write the swipe file to `~/.claude/instagram/swipe.md`. `/ig-reel` and
 the pack is working from the user's own evidence instead of from defaults.
 
 Nothing is posted, followed, liked or messaged by this skill. It reads.
+
+## Persian (Farsi) accounts
+
+If `voice.md` says the account writes in Persian, follow the Persian rules in
+its **Language** section (register, half-spaces, direction, digits, quotes),
+then these, which are specific to this skill:
+
+- `swipe.py` classifies Persian hooks with each formula's `match_fa` pattern and
+  scores them with the Persian side of `hookscore.py`.
+- Counts can be pasted the way the Persian app shows them: `۴۱۲ هزار`,
+  `۱٫۲ میلیون`, `۴۱۲٬۰۰۰`. English `412K` and `1.2M` work too.
+- Pick the 6 to 12 accounts from the Persian-speaking audience the user
+  actually wants, then one or two English accounts for format only. A format
+  that works in English often has no Persian version yet, which is the
+  opening.
+- If a Persian short has no auto-captions, transcribe the first three seconds
+  by hand. Do not run the hook through a translator first.

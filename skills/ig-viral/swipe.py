@@ -19,6 +19,13 @@ with a header line naming the columns:
 If you only have `followers`, leave median out and the script says so.
 `hook` is the first line of the reel, spoken or on screen, in their words.
 
+Counts can be written the way Instagram shows them: 412000, 412,000, 412K,
+1.2M, or in Persian, ۴۱۲٬۰۰۰ or ۴۱۲ هزار or ۱٫۲ میلیون.
+
+Persian (Farsi) hooks are classified with each formula's `match_fa` pattern,
+against the normalised hook (see persian.py), and scored by the Persian side
+of hookscore.py.
+
 Usage
   python3 swipe.py captured.tsv
   python3 swipe.py captured.tsv --out ~/.claude/instagram/swipe.md
@@ -36,6 +43,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 HOOKS = os.path.join(HERE, "..", "ig-reel", "hooks.json")
 WORD_RE = re.compile(r"[A-Za-z0-9$%'’-]+")
 
+sys.path.insert(0, HERE)
+import persian  # noqa: E402
+
 try:                                              # optional: score the hooks too
     sys.path.insert(0, os.path.join(HERE, "..", "ig-reel"))
     from hookscore import run as score_hook       # noqa: E402
@@ -51,16 +61,38 @@ def load_formulas(path):
     by_id = {h["id"]: h for h in d["hooks"]}
     order = d.get("classify_order") or sorted(by_id)
     return [(by_id[i]["id"], by_id[i]["name"],
-             re.compile(by_id[i]["match"], re.IGNORECASE)) for i in order if i in by_id]
+             re.compile(by_id[i]["match"], re.IGNORECASE),
+             re.compile(by_id[i]["match_fa"]) if by_id[i].get("match_fa") else None)
+            for i in order if i in by_id]
 
 
 def classify(hook, formulas):
     if not formulas:
         return None, "unclassified"
-    for fid, name, pattern in formulas:
+    fa = persian.is_persian(hook)
+    flat = persian.normalize(hook) if fa else hook
+    for fid, name, pattern, pattern_fa in formulas:
+        if fa and pattern_fa is not None and pattern_fa.search(flat):
+            return fid, name
         if pattern.search(hook):
             return fid, name
     return None, "unclassified"
+
+
+MULTIPLIERS = {"k": 1e3, "m": 1e6, "b": 1e9, "هزار": 1e3, "میلیون": 1e6, "میلیارد": 1e9}
+
+
+def parse_count(cell):
+    """'412,000', '412K', '1.2M', '۴۱۲ هزار', '۱٫۲ میلیون' -> int, or None."""
+    text = persian.to_ascii_digits(cell or "").strip().lower()
+    m = re.match(r"^([\d,]*\.?\d+)\s*(k|m|b|هزار|میلیون|میلیارد)?", text)
+    if not m:
+        return None
+    num, unit = m.group(1), m.group(2)
+    if unit:
+        return int(round(float(num.replace(",", "")) * MULTIPLIERS[unit]))
+    digits = re.sub(r"[^\d]", "", num)
+    return int(digits) if digits else None
 
 
 def read_rows(path):
@@ -79,13 +111,9 @@ def read_rows(path):
         if len(cells) < len(cols):
             cells += [""] * (len(cols) - len(cells))
         r = dict(zip(cols, [c.strip() for c in cells]))
-        try:
-            r["views"] = int(re.sub(r"[^\d]", "", r.get("views", "")) or 0)
-        except ValueError:
-            continue
+        r["views"] = parse_count(r.get("views", "")) or 0
         for k in ("followers", "median"):
-            digits = re.sub(r"[^\d]", "", r.get(k, "") or "")
-            r[k] = int(digits) if digits else None
+            r[k] = parse_count(r.get(k, ""))
         if r["views"] and r.get("hook"):
             rows.append(r)
     return rows
@@ -98,7 +126,8 @@ def analyse(rows, formulas):
         r["baseline"] = base
         r["outlier"] = round(r["views"] / base, 2) if base else None
         r["formula_id"], r["formula"] = classify(r["hook"], formulas)
-        r["words"] = len(WORD_RE.findall(r["hook"]))
+        r["words"] = len(persian.words(r["hook"]) if persian.is_persian(r["hook"])
+                         else WORD_RE.findall(r["hook"]))
         if score_hook:
             _, overall, verdict, _ = score_hook(r["hook"])
             r["hook_score"], r["hook_verdict"] = round(overall, 1), verdict

@@ -18,6 +18,17 @@ Structural tells (rule-of-three, "not just X, it's Y", hashtag walls) are
 REPORTED, never auto-rewritten - rewriting a sentence's shape needs judgement,
 so that is the model's job, not a regex's.
 
+Persian (Farsi) text is detected automatically and handled on its own terms:
+  - the half-space (ZWNJ, U+200C) between two Persian letters is spelling, not
+    a fingerprint, and is kept. Stray or doubled ones are still removed.
+  - direction marks (RLM, LRM, ALM and the isolates) are kept whenever the
+    text contains Persian, because that is what holds mixed Persian and
+    English in the right order.
+  - a zero-width joiner inside an emoji sequence is kept in any language.
+  - em dash becomes the Persian comma, curly quotes become guillemets «»,
+    Arabic yeh and kaf become Persian ی and ک.
+  - the Persian half of slop.json is matched with or without half-spaces.
+
 Usage
   python3 humanize.py draft.txt
   python3 humanize.py draft.txt --report
@@ -34,10 +45,13 @@ import sys
 import unicodedata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import persian  # noqa: E402
+
 LEX = os.path.join(HERE, "slop.json")
 
 URL_RE = re.compile(r"https?://\S+|www\.\S+|\S+@\S+\.\S+")
-SENT_RE = re.compile(r"[^.!?\n]+[.!?]*")
+SENT_RE = persian.SENT_RE
 
 
 def load_lexicon(path=LEX):
@@ -71,48 +85,93 @@ def restore_urls(text, found):
 
 
 def pass_invisible(text, lex):
-    """Delete or space-normalise invisible characters. Returns (text, hits)."""
+    """Delete or space-normalise invisible characters. Returns (text, hits).
+
+    A character that is doing a real job (a Persian half-space, a direction
+    mark in right-to-left text, a joiner inside an emoji) is kept, and the
+    report says how many were kept so nobody wonders where they went.
+    """
     hits = []
+    kept = {}
+    doubled = len(re.findall(persian.ZWNJ + "{2,}", text))
+    if doubled:
+        text = re.sub(persian.ZWNJ + "{2,}", persian.ZWNJ, text)
+        hits.append({"name": "U+200C doubled half-space", "count": doubled, "action": "collapse"})
+
+    def sweep(text, is_target, replacement):
+        out, n = [], 0
+        for i, c in enumerate(text):
+            if is_target(c):
+                if persian.keep_invisible(text, i):
+                    kept[c] = kept.get(c, 0) + 1
+                    out.append(c)
+                    continue
+                n += 1
+                out.append(replacement)
+            else:
+                out.append(c)
+        return "".join(out), n
+
+    listed = set()
     for entry in lex["invisible"]:
         cp = _cp(entry["cp"])
+        listed.update(range(cp[0], cp[1] + 1) if isinstance(cp, tuple) else [cp])
         if isinstance(cp, tuple):
-            pattern = "[" + re.escape(chr(cp[0])) + "-" + re.escape(chr(cp[1])) + "]"
+            lo, hi = cp
+            is_target = (lambda lo, hi: lambda c: lo <= ord(c) <= hi)(lo, hi)
         else:
-            pattern = re.escape(chr(cp))
-        n = len(re.findall(pattern, text))
+            is_target = (lambda cp: lambda c: ord(c) == cp)(cp)
+        text, n = sweep(text, is_target, "" if entry["action"] == "delete" else " ")
         if n:
             hits.append({"name": entry["cp"] + " " + entry["name"], "count": n,
                          "action": entry["action"]})
-            text = re.sub(pattern, "" if entry["action"] == "delete" else " ", text)
     # Any remaining Cf (format) character is invisible by definition.
-    stray = [c for c in text if unicodedata.category(c) == "Cf"]
-    if stray:
-        hits.append({"name": "other invisible format chars", "count": len(stray),
+    text, n = sweep(text, lambda c: unicodedata.category(c) == "Cf"
+                    and ord(c) not in listed, "")
+    if n:
+        hits.append({"name": "other invisible format chars", "count": n,
                      "action": "delete"})
-        text = "".join(c for c in text if unicodedata.category(c) != "Cf")
+    for c, n in kept.items():
+        label = {persian.ZWNJ: "half-spaces (Persian spelling)",
+                 persian.ZWJ: "emoji joiners",
+                 }.get(c, "direction marks (right-to-left text)")
+        hits.append({"name": f"U+{ord(c):04X} {label}", "count": n, "action": "kept"})
     return text, hits
 
 
 def pass_typographic(text, lex):
     hits = []
+    fa = persian.is_persian(text)
     for entry in lex["typographic"]:
         ch = entry["from"]
         n = text.count(ch)
         if not n:
             continue
-        hits.append({"name": f"{ch} {entry['name']}", "count": n, "to": entry["to"].strip() or "(space)"})
+        to = entry["to"]
+        if fa and ch == "—":
+            to = "، "
+        elif fa and ch in "“”":
+            to = "«" if ch == "“" else "»"
+        hits.append({"name": f"{ch} {entry['name']}", "count": n, "to": to.strip() or "(space)"})
         if ch == "—":
             # " word — word " and "word—word" both collapse to a comma + space.
-            text = re.sub(r"\s*—\s*", ", ", text)
+            text = re.sub(r"\s*—\s*", to, text)
         elif ch == "–":
             text = re.sub(r"\s*–\s*(?=\d)", "-", text)      # 5–10  -> 5-10
-            text = re.sub(r"\s+–\s+", ", ", text)            # used as em dash
+            text = re.sub(r"\s+–\s+", "، " if fa else ", ", text)   # used as em dash
             text = text.replace("–", "-")
         else:
-            text = text.replace(ch, entry["to"])
+            text = text.replace(ch, to)
+    if fa:
+        for ch, name in (("ي", "ARABIC YEH"), ("ى", "ALEF MAKSURA"), ("ك", "ARABIC KAF")):
+            n = text.count(ch)
+            if n:
+                hits.append({"name": f"{ch} {name}", "count": n,
+                             "to": "ک" if ch == "ك" else "ی"})
+        text = persian.fix_letters(text)
     # A comma inserted before existing punctuation reads wrong.
-    text = re.sub(r",\s*([,.;:!?])", r"\1", text)
-    text = re.sub(r",\s*\n", "\n", text)
+    text = re.sub(r"[,،]\s*([,.;:!?،؛؟])", r"\1", text)
+    text = re.sub(r"[,،]\s*\n", "\n", text)
     return text, hits
 
 
@@ -133,8 +192,7 @@ def pass_lexical(text, lex):
                      key=lambda e: len(e["find"]), reverse=True)
     for entry in entries:
         find = entry["find"]
-        pattern = re.compile(r"\b" + re.escape(find).replace(r"\ ", r"\s+") + r"\b",
-                             re.IGNORECASE)
+        pattern = persian.phrase_re(find)
         found = pattern.findall(text)
         if not found:
             continue
@@ -145,15 +203,15 @@ def pass_lexical(text, lex):
     # punctuation behind ("system. ." or a line that now opens on a comma),
     # and that reads worse than the slop did.
     text = re.sub(r"[ \t]{2,}", " ", text)
-    text = re.sub(r"(?m)^[ \t]*(?:[,.;:]+[ \t]*)+", "", text)
+    text = re.sub(r"(?m)^[ \t]*(?:[,.;:،؛]+[ \t]*)+", "", text)
     text = re.sub(r"(?m)^[ \t](?=\S)", "", text)       # one space left by a deletion.
                                                       # Deeper indents are deliberate.
-    text = re.sub(r"\s+([,.;:!?])", r"\1", text)
-    text = re.sub(r",\s*([,.;:!?])", r"\1", text)      # an em dash became a comma,
+    text = re.sub(r"[ \t]+([,.;:!?،؛؟])", r"\1", text)
+    text = re.sub(r"[,،]\s*([,.;:!?،؛؟])", r"\1", text)  # an em dash became a comma,
                                                       # then the clause after it went
     text = text.replace("...", "\x00ELL\x00")          # protect real ellipses
     text = re.sub(r"\.\s*\.+", ".", text)
-    text = re.sub(r"([!?])\s*\.", r"\1", text)
+    text = re.sub(r"([!?؟])\s*\.", r"\1", text)
     text = text.replace("\x00ELL\x00", "...")
     text = re.sub(r"(?m)^[ \t]+$", "", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
@@ -223,7 +281,7 @@ def render_report(report, out=sys.stderr):
     def head(title):
         print(f"\n{title}\n" + "-" * len(title), file=out)
 
-    total = sum(h["count"] for h in report["invisible"]) \
+    total = sum(h["count"] for h in report["invisible"] if h["action"] != "kept") \
         + sum(h["count"] for h in report["typographic"]) \
         + sum(h["count"] for h in report["lexical"])
 

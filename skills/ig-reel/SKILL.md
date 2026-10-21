@@ -145,3 +145,22 @@ HOOKS  (scored)
 Shooting #5: the ratio is believable, it reads in one glance on screen,
 and the number is yours.
 ```
+
+## Persian (Farsi) accounts
+
+If `voice.md` says the account writes in Persian, follow the Persian rules in
+its **Language** section (register, half-spaces, direction, digits, quotes),
+then these, which are specific to this skill:
+
+- `hooks.json` carries `template_fa`, `example_fa` and `on_screen_fa` for every
+  formula. Draft Persian hooks from those, not by translating the English
+  example: a translated hook keeps the English rhythm and sounds dubbed.
+- `hookscore.py` and `beats.py` detect Persian on their own. Persian stakes
+  include every "نمی..." verb, numbers count in Persian digits and words, and
+  Latin-script names (ChatGPT, iPhone) count as the concrete marker.
+- Write the spoken hook colloquially, exactly as it will be said:
+  "هیچ‌کس بهت نمی‌گه", not "هیچ‌کس به شما نمی‌گوید".
+- The on-screen line must not start or end with an English word. Video editors
+  set text direction the same way Instagram does, so "ChatGPT رایگان شد"
+  renders scrambled. Write "حالا ChatGPT رایگانه" instead.
+- Time yourself once and pass `--wpm`. The default rate was measured on English.

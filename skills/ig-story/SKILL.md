@@ -95,3 +95,15 @@ After: everyone who votes Yes gets a reply. That is the whole funnel.
 ```
 
 Nothing is posted. The user posts it.
+
+## Persian (Farsi) accounts
+
+If `voice.md` says the account writes in Persian, follow the Persian rules in
+its **Language** section (register, half-spaces, direction, digits, quotes),
+then these, which are specific to this skill:
+
+- Poll and quiz sticker options in Persian are short and colloquial
+  ("آره"/"نه", "اولی"/"دومی").
+- A keyword reply in a story or DM is typed on a phone. Choose a keyword with
+  no half-space in it, and test that the auto-reply tool matches the Persian
+  word before announcing it.

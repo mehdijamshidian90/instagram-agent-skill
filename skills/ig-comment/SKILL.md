@@ -92,3 +92,16 @@ Do not auto-post, do not automate comments, and do not use a browser tool to
 publish on the user's behalf. Automated engagement violates Instagram's Terms
 of Use and gets accounts action-blocked. This skill writes the comment. The
 user posts it.
+
+## Persian (Farsi) accounts
+
+If `voice.md` says the account writes in Persian, follow the Persian rules in
+its **Language** section (register, half-spaces, direction, digits, quotes),
+then these, which are specific to this skill:
+
+- Comment in the register of the post: colloquial on a colloquial account,
+  formal only where the post itself is formal.
+- A comment that starts with an English word renders left-to-right. Start
+  with a Persian word.
+- Do not translate an English comment template. Persian comment slop
+  ("عالی بود 👏", "مرسی از محتوای خوبت") is as invisible as "🔥🔥🔥".

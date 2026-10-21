@@ -117,3 +117,23 @@ linter:     READY
 ```
 
 Nothing is posted. The user pastes it.
+
+## Persian (Farsi) accounts
+
+If `voice.md` says the account writes in Persian, follow the Persian rules in
+its **Language** section (register, half-spaces, direction, digits, quotes),
+then these, which are specific to this skill:
+
+- `caption.py` runs three extra checks on a Persian caption: **DIRECTION** (a
+  line that starts with an English word is laid out left-to-right and comes
+  out scrambled; a line that ends on one puts the punctuation on the wrong
+  side), **LETTERS** (Arabic ي/ك instead of ی/ک) and **TAG SPELLING** (a
+  half-space inside a hashtag). It also counts Persian hashtags, which it
+  could not see before, and recognises Persian asks ("کلمه «ابزار» رو کامنت کن").
+- Hashtags: Persian words joined with an underscore, `#هوش_مصنوعی`, never with
+  a half-space or a space. Five at most. One English tag is worth it only if
+  the audience searches in English.
+- The first 125 characters rule is the same. Persian letters are narrower in
+  most phone fonts, so the real cut is often a little later. Do not rely on it.
+- Search terms: put the Persian words people actually type, colloquial
+  spelling included, in the first two lines.

@@ -93,3 +93,14 @@ NOISE  (2)  skipped. Replying gives them reach.
 
 Then the gate: nothing is posted until the user says yes. They paste the
 replies.
+
+## Persian (Farsi) accounts
+
+If `voice.md` says the account writes in Persian, follow the Persian rules in
+its **Language** section (register, half-spaces, direction, digits, quotes),
+then these, which are specific to this skill:
+
+- Reply in the language and register the commenter used. A comment in
+  Finglish gets a reply in Persian script unless voice.md says otherwise.
+- Persian keyword comments arrive spelled several ways (with or without a
+  half-space, Arabic or Persian ی). Treat them as the same keyword.

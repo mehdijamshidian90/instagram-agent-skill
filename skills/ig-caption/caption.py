@@ -14,6 +14,21 @@ device, the font size and where your line breaks fall, which is exactly why
 you want a margin rather than a caption engineered to end at 125. Change it
 with --truncate if you want to test a tighter one.
 
+Persian (Farsi) captions get three extra checks, because they fail in ways an
+English caption cannot:
+  - DIRECTION   Instagram sets each line's direction from its first strong
+                character. A Persian line that starts with an English word
+                (ChatGPT, iPhone) is laid out left-to-right and its words come
+                out in the wrong order. One that ends on an English word puts
+                the full stop on the wrong side. Rephrase so the line starts
+                and ends on a Persian word.
+  - LETTERS     Arabic ي and ك instead of Persian ی and ک, usually from an
+                Arabic keyboard layout. Searches typed on a Persian keyboard
+                may not match them.
+  - HASHTAGS    Persian tags are counted (the old pattern only saw Latin
+                ones), and a half-space inside a tag is flagged, because the
+                tag can stop at it. Use an underscore: #هوش_مصنوعی.
+
 Usage
   python3 caption.py caption.txt
   python3 caption.py caption.txt --keywords "proposal software,client contract"
@@ -25,7 +40,11 @@ import argparse
 import json
 import re
 import sys
+import os
 import textwrap
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import persian  # noqa: E402
 
 LIMIT = 2200             # Instagram's hard caption limit.
 TRUNCATE = 125           # Roughly where the feed cuts to "... more".
@@ -35,12 +54,18 @@ HASHTAG_LIMIT = 5        # Instagram's cap per post or reel since 18 Dec 2025,
                          # rather than many generic ones, can improve both your
                          # content's performance and people's experience".
 
-HASHTAG_RE = re.compile(r"(?:^|\s)(#[A-Za-z0-9_]+)")
+HASHTAG_RE = re.compile(r"(?:^|\s)(#[\w\u200c]+)")
 MENTION_RE = re.compile(r"(?:^|\s)(@[A-Za-z0-9_.]+)")
 LINK_RE = re.compile(r"https?://\S+|\bwww\.\S+|\b[a-z0-9-]+\.(?:com|co|io|net|org|ai|app)/\S*",
                      re.IGNORECASE)
 EMOJI_RE = re.compile(r"[\U0001F300-\U0001FAFF☀-➿←-⇿️]")
 CONCRETE_RE = re.compile(r"\$\s?\d|\b\d[\d,.]*\b|(?<!^)\b[A-Z][a-z]{2,}\b", re.MULTILINE)
+
+
+def concrete(text):
+    if persian.is_persian(text):
+        return persian.concrete_markers(text)
+    return CONCRETE_RE.findall(text)
 
 ASKS = [
     (re.compile(r"(?i)\bcomment (?:the word |\")?[A-Z0-9]{2,}\b"), "comment a keyword"),
@@ -52,10 +77,28 @@ ASKS = [
     (re.compile(r"(?i)\b(?:swipe|tap) (?:through|left|right|for|to)\b"), "swipe or tap"),
     (re.compile(r"(?i)\btell me\b|\bwhat would you\b|\bwhich one\b"), "answer a question"),
 ]
+# Persian asks, matched against persian.normalize(caption): no half-spaces,
+# "می" joined to its verb. Write new patterns in that form.
+FA_ASKS = [
+    (re.compile(r"(?:کلمه|کلمهی)?\s*[«\"]?\S+[»\"]?\s*(?:رو|را)\s*کامنت\s*(?:کن|کنید|کنین|بذار|بزار)"
+                r"|کامنت\s*(?:کن|کنید|کنین|بذار|بزار)\s*[«\"]?[A-Za-z0-9\u0600-\u06ff]{2,}"),
+     "comment a keyword"),
+    (re.compile(r"دایرکت\s*(?:بده|بدید|بدین|بزن|بزنید)|(?:بهم|به ما)\s*پیام\s*(?:بده|بدید|بدین)"), "DM me"),
+    (re.compile(r"(?:سیو|ذخیره)(?:ش|اش|هش)?\s*(?:کن|کنید|کنین)(?![\u0600-\u06ff])"), "save this"),
+    (re.compile(r"(?:بفرست|بفرستید|بفرستین|شیر\s*کن|به\s*اشتراک\s*بذار)"), "share this"),
+    (re.compile(r"فالو\s*(?:کن|کنید|کنین|یادت|یادتون)|(?:ما را|پیج رو)\s*(?:دنبال|فالو)"), "follow"),
+    (re.compile(r"لینک\s*(?:تو|توی|در)\s*(?:بایو|بیو)"), "link in bio"),
+    (re.compile(r"(?:ورق|اسلاید)\s*(?:بزن|بزنید|بزنین)|سوایپ\s*(?:کن|کنید)"), "swipe or tap"),
+    (re.compile(r"(?:بهم|برام)\s*بگو|نظرت\s*چیه|نظرتون\s*چیه|کدومش|کدوم\s*(?:یکی|رو)|شما\s*بودید\s*چیکار"),
+     "answer a question"),
+]
 
 FILLER_TAGS = {"#viral", "#fyp", "#explore", "#explorepage", "#foryou", "#foryoupage",
                "#trending", "#instagood", "#love", "#follow", "#like4like", "#reels",
-               "#reelsinstagram", "#viralreels", "#instadaily"}
+               "#reelsinstagram", "#viralreels", "#instadaily",
+               "#اکسپلور", "#اکسپلورر", "#اکسپلور_ایران", "#لایک", "#فالو", "#فالوور",
+               "#لایک_فالو", "#فالو_لایک", "#وایرال", "#ترند", "#ریلز", "#ریلز_اینستاگرام",
+               "#اینستاگرام", "#کلیپ", "#کلیپ_جذاب"}
 
 
 def visible_window(text, cut):
@@ -88,7 +131,12 @@ def analyse(text, cut=TRUNCATE, keywords=None):
     emoji = EMOJI_RE.findall(stripped)
     window = visible_window(stripped, cut)
     truncated = chars > cut
+    fa = persian.is_persian(stripped)
     asks = [name for pattern, name in ASKS if pattern.search(stripped)]
+    if fa:
+        flat = persian.normalize(stripped)
+        asks += [name for pattern, name in FA_ASKS
+                 if pattern.search(flat) and name not in asks]
     filler = [t for t in tags if t.lower() in FILLER_TAGS]
     keywords = [k.strip() for k in (keywords or []) if k.strip()]
 
@@ -113,9 +161,10 @@ def analyse(text, cut=TRUNCATE, keywords=None):
     else:
         add("FIRST LINE", "PASS", f"{len(first_line)} characters, lands whole")
 
-    add("HOOK IS CONCRETE", "PASS" if CONCRETE_RE.search(window) else "WARN",
-        f"{len(CONCRETE_RE.findall(window))} number(s) or name(s) in the visible window"
-        + ("" if CONCRETE_RE.search(window) else " - nothing checkable before the tap"))
+    markers = concrete(window)
+    add("HOOK IS CONCRETE", "PASS" if markers else "WARN",
+        f"{len(markers)} number(s) or name(s) in the visible window"
+        + ("" if markers else " - nothing checkable before the tap"))
 
     if len(tags) > HASHTAG_LIMIT:
         add("HASHTAGS", "FAIL", f"{len(tags)} tags, over Instagram's cap of {HASHTAG_LIMIT}. "
@@ -154,11 +203,46 @@ def analyse(text, cut=TRUNCATE, keywords=None):
         f"{len(emoji)} emoji, {density:.1f} per 100 characters"
         + (" - reads as decoration" if density > 4 else ""))
 
+    if fa:
+        flipped, tail = [], []
+        for i, line in enumerate(stripped.split("\n"), 1):
+            if not persian.has_rtl(line):
+                continue                         # an all-English line is fine as it is
+            body = re.sub(r"(?:\s*#[\w\u200c]+)+\s*$", "", line).strip()
+            if persian.first_strong(body) == "ltr":
+                flipped.append(i)
+            elif persian.last_strong(re.sub(r"[\s.!?؟،,؛:)»\"'\U0001F300-\U0001FAFF☀-➿️]+$", "", body)) == "ltr":
+                tail.append(i)
+        if flipped:
+            add("DIRECTION", "FAIL",
+                f"line(s) {', '.join(map(str, flipped))} start with an English word, so Instagram lays "
+                "them out left-to-right and the Persian comes out in the wrong order. "
+                "Start the line with a Persian word"
+                + (f". Line(s) {', '.join(map(str, tail))} also end on one" if tail else ""))
+        elif tail:
+            add("DIRECTION", "WARN",
+                f"line(s) {', '.join(map(str, tail))} end on an English word, so the punctuation "
+                "after it lands on the wrong side. End the line on a Persian word")
+        else:
+            add("DIRECTION", "PASS", "every Persian line starts and ends on a Persian word")
+
+        arabic = sum(stripped.count(c) for c in "يكى")
+        add("LETTERS", "WARN" if arabic else "PASS",
+            f"{arabic} Arabic ي/ك. Searches typed on a Persian keyboard may not match them. "
+            "humanize.py fixes this" if arabic else "Persian ی and ک throughout")
+
+        broken = [t for t in tags if persian.ZWNJ in t]
+        if broken:
+            add("TAG SPELLING", "WARN",
+                f"{', '.join(broken[:3])} contain a half-space, and the tag can stop at it. "
+                "Use an underscore instead: #هوش_مصنوعی")
+
     if keywords:
-        low = stripped.lower()
-        found = [k for k in keywords if k.lower() in low]
-        missing = [k for k in keywords if k.lower() not in low]
-        in_window = [k for k in found if k.lower() in window.lower()]
+        norm = (lambda t: persian.normalize(t).lower()) if fa else (lambda t: t.lower())
+        low = norm(stripped)
+        found = [k for k in keywords if norm(k) in low]
+        missing = [k for k in keywords if norm(k) not in low]
+        in_window = [k for k in found if norm(k) in norm(window)]
         status = "PASS" if not missing else ("WARN" if found else "FAIL")
         add("SEARCH TERMS", status,
             f"{len(found)}/{len(keywords)} present"

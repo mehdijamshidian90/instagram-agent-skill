@@ -109,3 +109,28 @@ do not tell a user their text is undetectable.
    again. Two rounds is normal. Five means the draft was written by formula,
    and the fix is a different draft, not more passes.
 5. Show the user the cleaned text and the score. Never the score alone.
+
+## Persian (Farsi) accounts
+
+If `voice.md` says the account writes in Persian, follow the Persian rules in
+its **Language** section (register, half-spaces, direction, digits, quotes),
+then these, which are specific to this skill:
+
+- `humanize.py` and `detect.py` detect Persian on their own. In Persian text the
+  half-space between two Persian letters is **kept** (it is spelling), as are
+  direction marks (they hold mixed Persian and English in order) and the
+  joiner inside an emoji. Doubled or stray half-spaces are still removed.
+- Em dash becomes the Persian comma "،", curly quotes become «»، and Arabic
+  ي/ك become ی/ک.
+- `slop.json` has a Persian block (`"lang": "fa"`): bureaucratic verbs
+  ("می‌باشد", "می‌گردد"), stock openers ("در دنیای امروز"), stock fillers
+  ("لازم به ذکر است"), and Instagram closers ("فالو یادت نره"). It matches with
+  a half-space, a space or nothing between the parts, so it catches every way
+  the phrase gets typed. Add to it.
+- Persian structural tells are flagged, not fixed: "نه تنها ... بلکه",
+  "X فقط یک ... نیست", "آیا می‌دانستید", the three-item list, and the
+  "تو این ویدیو" preamble.
+- VOICE in `detect.py` counts colloquial forms ("می‌خوام", "رو", "یه") the way
+  it counts contractions in English. If the account deliberately writes
+  formal Persian, a low colloquial number is expected: judge VOICE by the
+  pronoun and structure counts only.
