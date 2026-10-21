@@ -309,6 +309,50 @@ def code_has_no_hidden_bidi_characters():
         assert not any(ord(c) in bidi for c in text), path
 
 
+# ------------------------------------------------------------------ person --
+
+PERSON_TRAPS = [
+    # end in م / ت / یم / هام / هات but are not "my" / "your" / "we"
+    "مهم", "تمام", "انجام", "پیام", "سلام", "کدام", "اقدام", "فیلم", "چشم", "اسم",
+    "سهم", "کم", "هم", "نیم", "گیم", "قیمت", "مدت", "فرصت", "ساعت", "وقت", "دوست",
+    "پست", "دست", "پستو", "وقتو", "سیستم", "آیتم", "مردم", "تیم", "تصمیم", "رژیم",
+    "استریم", "اکستریم", "مقیم", "تقویم", "تصمیمو", "کیفیت", "کیفیتو", "امنیت",
+    "سایت", "موقعیت", "الهام", "سهام", "اشتباهات", "توجهات", "کارت", "کارتون",
+    "سنت", "هشتم", "بیستم", "مستخدم", "میلیونی", "تنظیمات", "اطلاعات",
+]
+PERSON_REAL = {
+    "گوشیم": 1, "کارم": 1, "پولمو": 1, "اکانتم": 1, "قراردادهام": 1, "کارمون": 1,
+    "بابام": 1, "اسمم": 1, "داریم": 1, "بریم": 1, "رفتیم": 1, "خوندم": 1, "میگم": 1,
+    "خسته\u200cام": 1, "ویدیو\u200cهام": 1,
+    "گوشیت": 2, "زندگیتو": 2, "اکانتت": 2, "پیجتون": 2, "وقتتو": 2, "نظرت": 2,
+    "میدونی": 2, "خونه\u200cات": 2, "عکس\u200cهات": 2,
+}
+
+
+@test
+def person_detector_has_no_false_positives_on_traps():
+    p = humanize.persian
+    bad = [w for w in PERSON_TRAPS if p.person_of(w)]
+    assert not bad, bad
+
+
+@test
+def person_detector_finds_possessives_and_verbs():
+    p = humanize.persian
+    wrong = {w: p.person_of(w) for w, want in PERSON_REAL.items() if p.person_of(w) != want}
+    assert not wrong, wrong
+
+
+@test
+def hook_address_reads_person_endings():
+    r, _, _, _ = hookscore.run("این ابزار رایگان جای ۳ تا اپ رو تو گوشیم گرفت.")
+    assert r["ADDRESS"][1] == "first person, no viewer named", r["ADDRESS"]
+    r, _, _, _ = hookscore.run("این ترفند ChatGPT زندگیتو عوض می\u200cکنه")
+    assert r["ADDRESS"][1] == "speaks to the viewer", r["ADDRESS"]
+    r, _, _, _ = hookscore.run("تیم اپل این تصمیم مهم رو گرفت")
+    assert r["ADDRESS"][1] == "third person, nobody in the room", r["ADDRESS"]
+
+
 def main():
     failed = 0
     for fn in TESTS:

@@ -169,9 +169,6 @@ MONEY_WORDS = {
     "تومن", "تومان", "دلار", "ریال", "یورو", "درصد", "حقوق", "درآمد", "دراومد",
     "اجاره", "سود", "ضرر", "میلیونی", "میلیاردی", "دلاری", "قیمت", "پول",
 }
-# Words that look like a person ending but are ordinary nouns.
-NOT_FIRST_PERSON = {"سیستم", "مردم", "آیتم", "الگوریتم", "گندم", "اتم", "ریتم", "سوم", "دوم",
-                    "چهارم", "پنجم", "ششم", "هفتم", "هشتم", "نهم", "دهم", "کدوم", "کدام"}
 NOT_MI_VERB = {"میلیون", "میلیونها", "میلیونی", "میلیارد", "میزان", "میدان", "میدون",
                "میان", "میهن", "میکروفون", "میوه", "میز", "میزبان", "میراث", "مینیمال",
                "میانگین", "میکس", "میم", "میمون", "میهمان", "میلی", "میتینگ"}
@@ -206,14 +203,122 @@ COLLOQUIAL_WORDS = {
     "اونجا", "اینجوری", "اونجوری", "چجوری", "چطوری", "خیلیا", "همهشون", "یکیش",
     "تو",   # colloquial both as "you" and as "in" (formal: شما / در)
 }
-PERSONAL_WORDS = {
-    "من", "ما", "شما", "خودم", "خودمون", "خودت", "خودتون", "بهت",
-    "بهتون", "برات", "براتون", "برام", "بهم", "بهمون", "باهات", "باهاتون",
-}
 _FA = "\u0622-\u06cc"
 COLLOQ_VERB_RE = re.compile(f"^ن?می[{_FA}]{{1,10}}(?:ه|ین|ن)$")
-PERSONAL_VERB_RE = re.compile(f"^ن?می[{_FA}]{{1,10}}(?:م|یم|ی|ین|ید)$")
+
+
+# ------------------------------------------------------------- person --
+# Who is speaking to whom. English has "I" and "you" as separate words;
+# Persian mostly carries person on the end of a word: "گوشیم" is "my phone",
+# "زندگیتو" is "your life", "داریم" is "we have". A suffix like "م" is also the
+# last letter of hundreds of ordinary nouns (تمام، پیام، فیلم، تصمیم), so each
+# rule below only fires where the ending is reliable, and each has a stop list
+# of the common words it would otherwise catch. All lists are normalised: no
+# half-spaces, Persian yeh and kaf.
+
+FIRST_WORDS = {"من", "ما", "خودم", "خودمون", "برام", "برامون", "بهم", "بهمون",
+               "ازم", "باهام", "باهامون"}
+SECOND_WORDS = {"شما", "خودت", "خودتون", "بهت", "بهتون", "برات", "براتون",
+                "باهات", "باهاتون", "ازت", "ازتون"}
+# "تو" is left out on purpose: in spoken Persian it is "in" as often as "you".
+# The verb after it carries the person when it means "you".
+PERSONAL_WORDS = FIRST_WORDS | SECOND_WORDS
+
+# Everyday things people say "my ..." and "your ..." about on Instagram. A word
+# from this list plus a person ending ("کارم", "اکانتت", "پیجمون", "پولمو") is
+# possessive. Nouns ending in ی (گوشی، زندگی) are covered by the یم / یت rules
+# instead, and nouns ending in ه by the half-space rule ("خونه‌ام").
+POSSESSABLE = {
+    "کار", "پول", "وقت", "اکانت", "پیج", "حساب", "دوست", "رئیس", "همکار", "شوهر",
+    "زن", "مامان", "بابا", "داداش", "خواهر", "برادر", "پسر", "دختر", "خانواده",
+    "ماشین", "لپتاپ", "سیستم", "اسم", "سن", "حقوق", "درآمد", "دراومد", "شغل",
+    "بیزنس", "استارتاپ", "قرارداد", "فیلم", "عکس", "پست", "ویدیو", "ویدئو",
+    "کانال", "فالوور", "پیام", "ایمیل", "دایرکت", "سایت", "اپ", "مغز", "دست",
+    "سر", "چشم", "دل", "ذهن", "روز", "شب", "عمر", "مدیر", "استاد", "معلم",
+    "مانیتور", "هدفون", "ساعت", "کیف", "کمد", "اتاق", "تخت", "بدن", "پوست",
+    "صدا", "حرف", "سوال", "جواب", "نظر", "ایده", "هدف", "برنامه", "پروفایل",
+    "بایو", "کامنت", "ریلز", "استوری", "لایو", "پادکست",
+    # nouns ending in ی take the ending directly: گوشیت، زندگیتو
+    "گوشی", "زندگی", "مشتری", "صندلی", "بازی",
+}
+POSSESSABLE = {w.replace(ZWNJ, "") for w in POSSESSABLE}
+FIRST_ENDINGS = ("مونو", "مون", "مو", "م")
+SECOND_ENDINGS = ("تونو", "تون", "تو", "ت")
+# Words that end like "my ..." / "your ..." but are one word.
+NOT_FIRST = {
+    "سیستم", "مردم", "آیتم", "الگوریتم", "گندم", "اتم", "ریتم", "مقدم", "سوم",
+    "دوم", "چهارم", "پنجم", "ششم", "هفتم", "هشتم", "نهم", "دهم", "کدوم", "کدام",
+    # ...یم that is not "my" or "we"
+    "تیم", "تصمیم", "تنظیم", "قدیم", "مستقیم", "عظیم", "رژیم", "تحریم", "تقسیم",
+    "تقدیم", "تسلیم", "تعمیم", "ترسیم", "ترمیم", "سیم", "نسیم", "حریم", "کریم",
+    "اقلیم", "تعلیم", "رحیم", "حکیم", "ابراهیم", "مریم", "جحیم", "تقویم",
+    "تحکیم", "تفهیم", "تکریم", "تجسیم", "تعظیم", "حجیم", "فهیم", "سهیم", "یتیم",
+    "ضخیم", "پریم", "تقدم", "مستخدم", "منهدم", "متصادم", "متقدم",
+    "بیستم", "دویستم", "سیصدم", "چهارصدم", "پانصدم", "پونصدم", "ششصدم",
+    "هفتصدم", "هشتصدم", "نهصدم",
+    # ...هام that is not "my ...s"
+    "الهام", "ابهام", "سهام", "اتهام", "اوهام", "افهام", "استفهام", "ایهام",
+}
+NOT_SECOND = {
+    "کارت",      # card
+    "کارتون",    # cartoon
+    "سنت",       # tradition
+    # ...هات that is not "your ...s"
+    "اشتباهات", "جهات", "توجهات", "شبهات", "مباهات", "تشابهات",
+}
+PERSONAL_VERB_1 = re.compile(f"^ن?می[{_FA}]{{1,10}}(?:م|یم)$")
+PERSONAL_VERB_2 = re.compile(f"^ن?می[{_FA}]{{1,10}}(?:ی|ین|ید)$")
 PAST_FIRST_RE = re.compile(f"^[{_FA}]{{2,}}(?:تم|دم|تیم|دیم)$")
+WE_VERB_RE = re.compile(f"^(?:ن?(?:داریم|هستیم)|نیستیم|ن?ب[{_FA}]{{1,8}}یم)$")
+NOT_FIRST_PERSON = NOT_FIRST    # older name, kept for anything importing it
+
+
+def person_of(raw):
+    """1 for a first-person word, 2 for second person, None for neither.
+
+    `raw` is one token as persian.words() returns it, half-spaces included:
+    the half-space is the most reliable signal there is ("خونه‌ام", "کتاب‌هات").
+    """
+    k = normalize(raw).lower()
+    if k in FIRST_WORDS:
+        return 1
+    if k in SECOND_WORDS:
+        return 2
+    # After a half-space the ending is unambiguous.
+    tail = raw.translate(LETTERS).split(ZWNJ)[-1] if ZWNJ in raw else None
+    if tail in ("ام", "م", "هام", "امو", "مو", "مون", "امون"):
+        return 1
+    if tail in ("ات", "ت", "هات", "اتو", "تو", "تون", "اتون"):
+        return 2
+    if k not in NOT_MI_VERB:
+        if PERSONAL_VERB_1.match(k):
+            return 1
+        if PERSONAL_VERB_2.match(k):
+            return 2
+    if k in NOT_FIRST or k in NOT_SECOND:
+        return None
+    for end in FIRST_ENDINGS:
+        if k.endswith(end) and k[:-len(end)] in POSSESSABLE:
+            return 1
+    for end in SECOND_ENDINGS:
+        if k.endswith(end) and k[:-len(end)] in POSSESSABLE:
+            return 2
+    # "...یم" on its own is not safe: loanwords end that way too (استریم، تیم،
+    # رژیم). Only the verb shapes: "داریم"، "هستیم" and the subjunctive "بریم".
+    if WE_VERB_RE.match(k):
+        return 1
+    if len(k) >= 5 and k.endswith("هام"):                          # قراردادهام، پستهام
+        return 1
+    if len(k) >= 5 and (k.endswith("هات") or k.endswith("هاتو")):  # ویدیوهات
+        return 2
+    if PAST_FIRST_RE.match(k):                                      # خوندم، داشتیم
+        return 1
+    return None
+
+
+def persons(text):
+    """The set of grammatical persons that occur in a text, from {1, 2}."""
+    return {p for p in (person_of(w) for w in words(text)) if p}
 
 
 def colloquial_count(text):
@@ -227,15 +332,7 @@ def colloquial_count(text):
 
 
 def personal_count(text):
-    n = 0
-    for k in norm_words(text):
-        if k in PERSONAL_WORDS:
-            n += 1
-        elif k not in NOT_MI_VERB and PERSONAL_VERB_RE.match(k):
-            n += 1
-        elif k not in NOT_FIRST_PERSON and PAST_FIRST_RE.match(k):
-            n += 1
-    return n
+    return sum(1 for w in words(text) if person_of(w))
 
 
 def first_strong(line):

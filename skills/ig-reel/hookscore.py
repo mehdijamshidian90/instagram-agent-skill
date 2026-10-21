@@ -159,13 +159,6 @@ FA_IMPERATIVES = {
     "پاک", "سیو", "ذخیره", "استفاده", "شروع", "ول", "چک", "هیچوقت", "همیشه",
     "دانلود", "نصب", "بدزد", "بدزدید",
 }
-# "تو" is left out on purpose: in spoken Persian it is "in" as often as "you".
-FA_SECOND = {"شما", "خودت", "خودتون", "بهت", "بهتون", "برات", "براتون",
-             "باهات", "باهاتون", "ازت", "ازتون"}
-FA_FIRST = {"من", "ما", "خودم", "خودمون", "برام", "بهم", "بهمون", "ازم"}
-FA_SECOND_VERB = re.compile("^ن?(?:می)?[\u0622-\u06cc]{1,10}(?:ی|ین|ید)$")
-FA_FIRST_VERB = re.compile("^ن?می[\u0622-\u06cc]{1,10}(?:م|یم)$")
-
 FA_DEALBREAKERS = [
     (re.compile(r"^\s*(?:اسکرول نکن|رد نشو|رد نشید|صبر کن)"),
      "Opens with \"اسکرول نکن\". Asking for attention proves you have not earned it."),
@@ -304,16 +297,15 @@ def check_frontload(text):
 def check_address(text):
     """Aimed at one viewer, or floating in the air."""
     if persian.is_persian(text):
+        # Person lives on word endings in Persian ("گوشیت" is "your phone"),
+        # so persian.person_of reads them; see the stop lists there.
+        found = persian.persons(text)
         keys = persian.norm_words(text)
-        if any(k in FA_SECOND or (k not in persian.NOT_MI_VERB and FA_SECOND_VERB.match(k)
-                                  and (k.startswith("می") or k.startswith("نمی")))
-               or (len(k) >= 5 and k.endswith("تون")) for k in keys):
+        if 2 in found:
             return 100.0, "speaks to the viewer"
         if keys and keys[0] in FA_IMPERATIVES:
             return 90.0, f"imperative opener (\"{keys[0]}\")"
-        if any(k in FA_FIRST or (k not in persian.NOT_MI_VERB and FA_FIRST_VERB.match(k))
-               or (k not in persian.NOT_FIRST_PERSON and persian.PAST_FIRST_RE.match(k))
-               for k in keys):
+        if 1 in found:
             return 70.0, "first person, no viewer named"
         return 35.0, "third person, nobody in the room"
     low = text.lower()
