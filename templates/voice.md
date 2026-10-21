@@ -43,6 +43,10 @@ the words out loud. A line you would never say is not a draft, it is a retake.
 - **Digits:** (Persian: ۱۲۳ / Latin: 123)
 - **Brand and tool names:** (keep in Latin script: ChatGPT / write in Persian:
   چت‌جی‌پی‌تی)
+- **Font for slides and covers:** Vazirmatn
+  (any Google Fonts family name, or a path to your own .ttf/.woff2 file.
+  `/ig-carousel` uses it on every slide. Optional: a second family for the
+  cover headline only.)
 
 ### If I post in Persian, every skill follows these
 

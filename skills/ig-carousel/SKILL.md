@@ -112,6 +112,24 @@ then these, which are specific to this skill:
   sequence inside a slide (steps, arrows, before/after) in that order too.
 - A slide line that starts with an English word breaks direction the same way
   a caption line does. Put the Persian word first.
-- Use a Persian font that renders half-spaces correctly; test "می‌خوام" and
-  "کتاب‌ها" on the cover before exporting all ten.
+- **Font.** Use the font named on the "Font for slides and covers" line of
+  `voice.md`. If that line is empty, use **Vazirmatn**: it is free (OFL),
+  renders half-spaces correctly, and has Persian digits built in. Load it
+  from Google Fonts and set the page direction:
+
+  ```html
+  <html lang="fa" dir="rtl">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=block" rel="stylesheet">
+  <style>
+    body { font-family: "Vazirmatn", sans-serif; }
+    h1   { font-weight: 900; }   /* cover headline */
+  </style>
+  ```
+
+  If `voice.md` gives a path to a font file instead, load it with
+  `@font-face` from that path. Either way, wait for the font before
+  rendering, or the first slide comes out in a fallback font: with Chrome
+  headless add `--virtual-time-budget=5000`, or render after
+  `document.fonts.ready` resolves. Then check the cover for "می‌خوام" and
+  "کتاب‌ها": if the half-space shows as a gap or a box, the font did not load.
 - Use the same digits on every slide: all Persian (۱۲۳) or all Latin (123).
