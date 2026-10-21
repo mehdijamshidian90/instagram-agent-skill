@@ -133,7 +133,7 @@ then these, which are specific to this skill:
 - Hashtags: Persian words joined with an underscore, `#هوش_مصنوعی`, never with
   a half-space or a space. Five at most. One English tag is worth it only if
   the audience searches in English.
-- The first 125 characters rule is the same. Persian letters are narrower in
-  most phone fonts, so the real cut is often a little later. Do not rely on it.
+- The 125-character window is the same approximation as in English. Put the
+  hook in the first line and do not engineer a caption to end at the cut.
 - Search terms: put the Persian words people actually type, colloquial
   spelling included, in the first two lines.

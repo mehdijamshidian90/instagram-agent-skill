@@ -14,7 +14,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILLS = os.path.join(ROOT, "skills")
-Z = "‌"          # half-space
+Z = "\u200c"          # half-space
 
 
 def load(folder, name):
@@ -73,7 +73,7 @@ def humanize_keeps_half_spaces():
 
 @test
 def humanize_removes_stray_and_doubled_half_spaces():
-    out, _ = humanize.humanize(f"سریع{Z}{Z}تر {Z}میشه​.\n", LEX)
+    out, _ = humanize.humanize(f"سریع{Z}{Z}تر {Z}میشه\u200b.\n", LEX)
     assert out == f"سریع{Z}تر میشه.\n", repr(out)
 
 
@@ -85,16 +85,16 @@ def humanize_still_strips_half_space_in_english():
 
 @test
 def humanize_keeps_direction_marks_only_in_rtl_text():
-    out, _ = humanize.humanize("‏iPhone 17 هم اومد.\n", LEX)
-    assert out.startswith("‏")
-    out, _ = humanize.humanize("‏iPhone 17 is out.\n", LEX)
-    assert "‏" not in out
+    out, _ = humanize.humanize("\u200fiPhone 17 هم اومد.\n", LEX)
+    assert out.startswith("\u200f")
+    out, _ = humanize.humanize("\u200fiPhone 17 is out.\n", LEX)
+    assert "\u200f" not in out
 
 
 @test
 def humanize_keeps_emoji_joiner():
-    out, _ = humanize.humanize("done \U0001F468‍\U0001F4BB\n", LEX)
-    assert "‍" in out
+    out, _ = humanize.humanize("done \U0001F468\u200d\U0001F4BB\n", LEX)
+    assert "\u200d" in out
 
 
 @test
@@ -181,7 +181,7 @@ def every_persian_example_classifies_as_its_own_formula():
 
 @test
 def beats_times_persian():
-    a = beats.analyse("۱۸ میلیون تومن ضرر کردم.\nهمین یه کلمه برام ۱۸ میلیون می‌ارزید.\n")
+    a = beats.analyse("۱۸ میلیون تومن ضرر کردم.\nهمین یه کلمه برام ۱۸ میلیون می\u200cارزید.\n")
     assert a["total_words"] == 12, a["total_words"]
     assert any("Loops" in n for n in a["notes"])
 
@@ -225,6 +225,88 @@ def swipe_parses_instagram_counts():
              "۴۱۲٬۰۰۰": 412000, "۴۱۲ هزار": 412000, "۱٫۲ میلیون": 1200000, "": None}
     for cell, want in cases.items():
         assert swipe.parse_count(cell) == want, (cell, swipe.parse_count(cell))
+
+
+# ------------------------------------------------------- review regressions --
+
+@test
+def humanize_pairs_quotes_in_reading_order():
+    for text in ("این “رایگان” است.\n", "این ”رایگان“ است.\n"):
+        out, _ = humanize.humanize(text, LEX)
+        assert out == "این «رایگان» است.\n", out
+
+
+@test
+def trailing_comma_keeps_paragraph_break():
+    out, _ = humanize.humanize("اول این،\n\nبعد اون.\n", LEX)
+    assert out == "اول این\n\nبعد اون.\n", repr(out)
+    out, _ = humanize.humanize("Hello,\n\nWorld is here.\n", LEX)
+    assert out == "Hello\n\nWorld is here.\n", repr(out)
+
+
+@test
+def ambiguous_phrase_left_alone():
+    out, _ = humanize.humanize("در جهت مخالف رفت.\n", LEX)
+    assert out == "در جهت مخالف رفت.\n", out
+
+
+@test
+def to_meaning_in_is_not_second_person():
+    r, _, _, _ = hookscore.run("این ابزار رایگان جای ۳ تا اپ رو تو گوشیم گرفت.")
+    assert r["ADDRESS"][1] != "speaks to the viewer", r["ADDRESS"]
+
+
+@test
+def news_hook_with_emruz_is_not_a_preamble():
+    _, _, _, flags = hookscore.run("امروز قراره اپل آیفون ۱۸ رو معرفی کنه")
+    assert not flags, flags
+    _, _, _, flags = hookscore.run("امروز می\u200cخوام بهتون یه ترفند نشون بدم")
+    assert flags, "real preamble missed"
+
+
+@test
+def stake_stems_do_not_match_unrelated_words():
+    r, _, _, _ = hookscore.run("بند ۴ قراردادم رو بنویس")
+    assert "بند" not in r["STAKES"][1], r["STAKES"]
+    r, _, _, _ = hookscore.run("این قرارداد رو نخون، بنویسش")
+    assert "نخون" in r["STAKES"][1], r["STAKES"]
+
+
+@test
+def caption_asks_are_not_triggered_by_lookalikes():
+    cases = {
+        "کلمه «ابزار» رو کامنت کن تا لینکشو بفرستم.": ["comment a keyword"],
+        "نظرتون رو کامنت کنید.": ["answer a question"],
+        "به فالوکنندگان جدید خوش اومدید.": [],
+        "اینو برای دوستت بفرست.": ["share this"],
+        "سیوش کن که بعدا لازمت میشه.": ["save this"],
+        "این ابزار وقتمو ذخیره کرد.": [],
+    }
+    for text, want in cases.items():
+        assert caption.analyse(text)["asks"] == want, (text, caption.analyse(text)["asks"])
+
+
+@test
+def caption_keywords_ignore_half_space_and_space():
+    a = caption.analyse("دیگه ChatGPT لازم نیست.\nهوش\u200cمصنوعی رو یاد بگیر.", keywords=["هوش مصنوعی"])
+    status = {c["check"]: c["status"] for c in a["checks"]}
+    assert status["SEARCH TERMS"] == "PASS"
+
+
+@test
+def swipe_parses_spaced_and_decimal_comma_counts():
+    assert swipe.parse_count("1 234") == 1234
+    assert swipe.parse_count("1,2K") == 1200
+    assert swipe.parse_count("1,200K") == 1200000
+
+
+@test
+def code_has_no_hidden_bidi_characters():
+    import glob
+    bidi = set(range(0x202A, 0x202F)) | set(range(0x2066, 0x206A)) | {0x200E, 0x200F, 0x061C}
+    for path in glob.glob(os.path.join(ROOT, "**", "*.py"), recursive=True):
+        text = open(path, encoding="utf-8").read()
+        assert not any(ord(c) in bidi for c in text), path
 
 
 def main():

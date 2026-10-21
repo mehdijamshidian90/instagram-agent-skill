@@ -130,8 +130,11 @@ FA_STAKES = {
     "نه", "نکن", "نکنید", "نکنین", "هیچوقت", "هرگز", "هیچکس", "هیچکی", "هیچ",
     "ولی", "اما", "جز", "بدون", "فقط", "هنوز", "قبل", "قبلش", "بجای", "بهجای",
     "کاش", "نباید", "باید", "اصلا", "واقعا", "واقعیت", "حقیقت", "راز", "رازی",
-    "مخفی", "پنهان", "رایگان", "مجانی", "اولین", "آخرین", "بدترین", "بهترین",
-    "یعنی", "وگرنه", "تقلب", "دروغ", "ممنوع", "غیرقانونی", "جریمه",
+    "مخفی", "پنهان", "رایگان", "مجانی", "اولین", "بدترین",
+    "وگرنه", "تقلب", "دروغ", "ممنوع", "غیرقانونی", "جریمه",
+    # negative imperatives: "don't buy", "don't read", "don't say" ...
+    "نخر", "نخرید", "نزن", "نزنید", "نخون", "نخونید", "نرو", "نرید", "نده", "ندید",
+    "نگو", "نگید", "نریز", "نذار", "نزار", "نفرست", "ننویس", "نپوش", "نخور",
 }
 # Stems: a token that starts with one of these counts, so "اشتباهی",
 # "اشتباهاتی" and "اشتباهمو" all land.
@@ -139,7 +142,7 @@ FA_STAKE_STEMS = (
     "اشتباه", "غلط", "ضرر", "باخت", "هزینه", "گرون", "گران", "اخراج", "حذف",
     "پاکش", "جایگزین", "شکست", "ورشکست", "خراب", "متنفر", "کلاهبردار", "مشکل",
     "خطر", "هشدار", "پشیمون", "پشیمان", "دزد", "هدر", "سوخت", "پولم", "پولت",
-    "بلاک", "بن", "ریجکت", "رد شد",
+    "بلاک", "ریجکت",
 )
 FA_WEAK_OPENERS = [
     "سلام", "درود", "دوستان", "بچهها", "رفقا", "خب", "خوب", "امروز", "ببین",
@@ -156,18 +159,19 @@ FA_IMPERATIVES = {
     "پاک", "سیو", "ذخیره", "استفاده", "شروع", "ول", "چک", "هیچوقت", "همیشه",
     "دانلود", "نصب", "بدزد", "بدزدید",
 }
-FA_SECOND = {"شما", "تو", "خودت", "خودتون", "بهت", "بهتون", "برات", "براتون",
+# "تو" is left out on purpose: in spoken Persian it is "in" as often as "you".
+FA_SECOND = {"شما", "خودت", "خودتون", "بهت", "بهتون", "برات", "براتون",
              "باهات", "باهاتون", "ازت", "ازتون"}
 FA_FIRST = {"من", "ما", "خودم", "خودمون", "برام", "بهم", "بهمون", "ازم"}
 FA_SECOND_VERB = re.compile("^ن?(?:می)?[\u0622-\u06cc]{1,10}(?:ی|ین|ید)$")
 FA_FIRST_VERB = re.compile("^ن?می[\u0622-\u06cc]{1,10}(?:م|یم)$")
-FA_NUM_RE = re.compile(r"\d[\d,.]*\s?%?")
 
 FA_DEALBREAKERS = [
     (re.compile(r"^\s*(?:اسکرول نکن|رد نشو|رد نشید|صبر کن)"),
      "Opens with \"اسکرول نکن\". Asking for attention proves you have not earned it."),
     (re.compile(r"(?:(?:تو|توی|در) این (?:ویدیو|ویدئو|ریلز|ریل|پست|کلیپ)"
-                r"|امروز (?:میخوام|میخواهم|قراره)"
+                r"|امروز (?:میخوام|میخواهم|قراره)(?: \S+){0,3} (?:بهتون|بهت|به شما|براتون|برات"
+                r"|درباره|راجع|در مورد|نشون|یاد)"
                 r"|(?:میخوام|قراره) (?:بهتون|به شما|بهت) (?:نشون|یاد|بگم))"),
      "Video preamble (\"تو این ویدیو\", \"امروز می‌خوام\"). Delete it and open on the payoff."),
     (re.compile(r"^\s*(?:سلام|درود|هی|های|خوش اومدین|خوش آمدید|دوستان|بچهها)(?![\u0600-\u06ff])"),
@@ -303,11 +307,11 @@ def check_address(text):
         keys = persian.norm_words(text)
         if any(k in FA_SECOND or (k not in persian.NOT_MI_VERB and FA_SECOND_VERB.match(k)
                                   and (k.startswith("می") or k.startswith("نمی")))
-               or (len(k) >= 5 and (k.endswith("تون") or k.endswith("تو"))) for k in keys):
+               or (len(k) >= 5 and k.endswith("تون")) for k in keys):
             return 100.0, "speaks to the viewer"
         if keys and keys[0] in FA_IMPERATIVES:
             return 90.0, f"imperative opener (\"{keys[0]}\")"
-        if any(k in FA_FIRST or FA_FIRST_VERB.match(k)
+        if any(k in FA_FIRST or (k not in persian.NOT_MI_VERB and FA_FIRST_VERB.match(k))
                or (k not in persian.NOT_FIRST_PERSON and persian.PAST_FIRST_RE.match(k))
                for k in keys):
             return 70.0, "first person, no viewer named"

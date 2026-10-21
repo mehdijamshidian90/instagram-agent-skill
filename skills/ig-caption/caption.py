@@ -79,17 +79,27 @@ ASKS = [
 ]
 # Persian asks, matched against persian.normalize(caption): no half-spaces,
 # "می" joined to its verb. Write new patterns in that form.
+_END = r"(?![\u0600-\u06ff])"     # the verb ends here: "بفرست" but not "بفرستم"
+_DO = r"(?:کن|کنید|کنین)" + _END
 FA_ASKS = [
-    (re.compile(r"(?:کلمه|کلمهی)?\s*[«\"]?\S+[»\"]?\s*(?:رو|را)\s*کامنت\s*(?:کن|کنید|کنین|بذار|بزار)"
-                r"|کامنت\s*(?:کن|کنید|کنین|بذار|بزار)\s*[«\"]?[A-Za-z0-9\u0600-\u06ff]{2,}"),
+    # A keyword ask names the word: in quotes, or after "کلمه".
+    (re.compile(r"کلمه(?:ی)?\s*[«\"]?[^\s«»\"]{2,}[»\"]?\s*(?:رو|را)?\s*کامنت"
+                r"|[«\"][^«»\"\n]{1,20}[»\"]\s*(?:رو|را)?\s*کامنت"
+                r"|کامنت\s*(?:کن|کنید|کنین|بذار|بزار|بنویس)\s*[«\"]"),
      "comment a keyword"),
-    (re.compile(r"دایرکت\s*(?:بده|بدید|بدین|بزن|بزنید)|(?:بهم|به ما)\s*پیام\s*(?:بده|بدید|بدین)"), "DM me"),
-    (re.compile(r"(?:سیو|ذخیره)(?:ش|اش|هش)?\s*(?:کن|کنید|کنین)(?![\u0600-\u06ff])"), "save this"),
-    (re.compile(r"(?:بفرست|بفرستید|بفرستین|شیر\s*کن|به\s*اشتراک\s*بذار)"), "share this"),
-    (re.compile(r"فالو\s*(?:کن|کنید|کنین|یادت|یادتون)|(?:ما را|پیج رو)\s*(?:دنبال|فالو)"), "follow"),
+    (re.compile(r"دایرکت\s*(?:بده|بدید|بدین|بزن|بزنید|بزنین)" + _END
+                + r"|(?:بهم|به ما|بهمون)\s*پیام\s*(?:بده|بدید|بدین)" + _END), "DM me"),
+    (re.compile(r"(?:سیو|ذخیره)(?:ش|اش|هش)?\s*" + _DO), "save this"),
+    (re.compile(r"(?:برای|به|واسه)\s+\S+\s+(?:بفرست|بفرستید|بفرستین)" + _END
+                + r"|(?:بفرست|بفرستید|بفرستین)\s+(?:برای|به|واسه)" + _END
+                + r"|شیر\s*" + _DO + r"|به\s*اشتراک\s*(?:بذار|بزار|بگذارید)" + _END), "share this"),
+    (re.compile(r"فالو\s*(?:" + _DO + r"|یادت|یادتون)|(?:ما را|پیج رو|پیجمو|پیجمون رو)\s*(?:دنبال|فالو)"),
+     "follow"),
     (re.compile(r"لینک\s*(?:تو|توی|در)\s*(?:بایو|بیو)"), "link in bio"),
-    (re.compile(r"(?:ورق|اسلاید)\s*(?:بزن|بزنید|بزنین)|سوایپ\s*(?:کن|کنید)"), "swipe or tap"),
-    (re.compile(r"(?:بهم|برام)\s*بگو|نظرت\s*چیه|نظرتون\s*چیه|کدومش|کدوم\s*(?:یکی|رو)|شما\s*بودید\s*چیکار"),
+    (re.compile(r"(?:ورق|اسلاید)\s*(?:بزن|بزنید|بزنین)" + _END + r"|سوایپ\s*" + _DO), "swipe or tap"),
+    (re.compile(r"(?:بهم|برام|بهمون|برامون)\s*(?:بگو|بگید|بگین|بنویس|بنویسید|بنویسین)" + _END
+                + r"|نظرت\s*چیه|نظرتون\s*چیه|نظرت(?:ون)?\s*(?:رو|را)\s*(?:کامنت|بنویس|بگو)"
+                + r"|کدومش|کدوم\s*(?:یکی|رو)|شما\s*بودید\s*چیکار"),
      "answer a question"),
 ]
 
@@ -238,7 +248,10 @@ def analyse(text, cut=TRUNCATE, keywords=None):
                 "Use an underscore instead: #هوش_مصنوعی")
 
     if keywords:
-        norm = (lambda t: persian.normalize(t).lower()) if fa else (lambda t: t.lower())
+        # Persian search terms match with a space, a half-space or nothing
+        # between the words, the way people actually type them.
+        norm = ((lambda t: re.sub(r"\s+", "", persian.normalize(t)).lower()) if fa
+                else (lambda t: t.lower()))
         low = norm(stripped)
         found = [k for k in keywords if norm(k) in low]
         missing = [k for k in keywords if norm(k) not in low]

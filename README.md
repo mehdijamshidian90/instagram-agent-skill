@@ -5,8 +5,17 @@
 > deleting them, every tool tokenises and scores Persian, `slop.json` has a
 > Persian block, all 26 hook formulas have Persian templates and match
 > patterns, and `caption.py` catches the Persian line-direction bug. English
-> behaviour is unchanged (`tests/test_persian.py` checks it against the numbers
-> below). [راهنمای فارسی](README.fa.md)
+> output is unchanged (`tests/test_persian.py` checks the numbers below)
+> except for five bug fixes that apply in any language:
+>
+> - five hashtags are no longer flagged as a "wall": five is Instagram's cap,
+>   so the wall starts at six
+> - a comma at the end of a paragraph no longer swallows the blank line after it
+> - the joiner inside an emoji like 👨‍💻 is kept instead of splitting it in two
+> - `swipe.py` reads counts the way Instagram prints them: `48K` was read as 48
+> - `caption.py` counts hashtags with accented or non-Latin letters
+>
+> [راهنمای فارسی](README.fa.md)
 
 Thirteen Claude skills that run an Instagram account. Free, MIT, no signup, no
 API key, nothing to connect.
@@ -168,7 +177,9 @@ python3 detect.py before.txt after.txt       # prove the delta
 
 **What comes out automatically:**
 
-- **Invisible characters.** Zero-width spaces and joiners, word joiners, soft
+- **Invisible characters.** (Except where they are doing a job: the Persian
+  half-space, direction marks in right-to-left text, the joiner inside an
+  emoji.) Zero-width spaces and joiners, word joiners, soft
   hyphens, byte-order marks, Unicode tag characters, invisible separators,
   non-breaking and narrow spaces. Your keyboard does not make these. They
   survive copy-paste and they are invisible in every editor you own.

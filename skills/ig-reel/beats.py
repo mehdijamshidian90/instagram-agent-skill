@@ -69,14 +69,15 @@ def words(text):
 
 
 def concrete(text):
-    if persian.has_rtl(text):
+    if persian.is_persian(text):
         return len(persian.concrete_markers(text))
     return len(CONCRETE_RE.findall(text))
 
 
 def loop_keys(text):
     if persian.has_rtl(text):
-        return {k for k in persian.norm_words(text) if k not in FA_STOPWORDS and len(k) > 1}
+        return {k for k in persian.norm_words(text)
+                if k not in FA_STOPWORDS and k not in STOPWORDS and len(k) > 1}
     return {w.lower() for w in words(text) if w.lower() not in STOPWORDS}
 
 

@@ -38,7 +38,9 @@ their own script.
 
 ## What gets fixed automatically
 
-**1. Invisible characters.** Zero-width spaces and joiners, word joiners, soft
+**1. Invisible characters.** (Except where they are doing a job: the Persian
+half-space, direction marks in right-to-left text, the joiner inside an
+emoji. See the Persian section below.) Zero-width spaces and joiners, word joiners, soft
 hyphens, byte-order marks, Unicode tag characters, invisible separators,
 non-breaking and narrow spaces. A keyboard does not produce these. They survive
 copy-paste, they are invisible in every editor, and they are the most

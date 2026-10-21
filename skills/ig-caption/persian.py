@@ -19,12 +19,12 @@ What it covers:
 import re
 import unicodedata
 
-ZWNJ = "‌"           # نیم‌فاصله. Part of correct Persian spelling.
-ZWJ = "‍"
-RLM, LRM, ALM = "‏", "‎", "؜"
+ZWNJ = "\u200c"           # نیم‌فاصله. Part of correct Persian spelling.
+ZWJ = "\u200d"
+RLM, LRM, ALM = "\u200f", "\u200e", "\u061c"
 
 # Arabic-script letters, harakat and tatweel, minus punctuation and digits.
-FA_CHARS = "ؠ-ؿف-ٰٟ-ۓەۮۯۺ-ۿـ"
+FA_CHARS = "\u0620-\u063f\u0641-\u065f\u0670-\u06d3\u06d5\u06ee\u06ef\u06fa-\u06ff\u0640"
 FA_LETTER_RE = re.compile(f"[{FA_CHARS}]")
 LATIN_LETTER_RE = re.compile(r"[A-Za-z]")
 
@@ -48,9 +48,9 @@ LETTERS = str.maketrans({
     "ك": "ک",   # Arabic kaf
     "ۀ": "ه",   # heh with yeh above -> heh, for matching only
     "ة": "ه",
-    "ـ": None,   # tatweel, decorative stretching
+    "\u0640": None,   # tatweel, decorative stretching
 })
-HARAKAT_RE = re.compile("[ً-ٰٟ]")
+HARAKAT_RE = re.compile("[\u064b-\u065f\u0670]")
 
 
 def is_persian(text, threshold=0.3):
@@ -118,11 +118,11 @@ def keep_invisible(text, i):
     if c == ZWNJ:
         return bool(prev_c and next_c and FA_LETTER_RE.match(prev_c)
                     and FA_LETTER_RE.match(next_c))
-    if c in (RLM, LRM, ALM) or "‪" <= c <= "‮" or "⁦" <= c <= "⁩":
+    if c in (RLM, LRM, ALM) or "\u202a" <= c <= "\u202e" or "\u2066" <= c <= "\u2069":
         return has_rtl(text)
     if c == ZWJ:
         def pictographic(ch):
-            return bool(ch) and (unicodedata.category(ch) == "So" or ch == "️"
+            return bool(ch) and (unicodedata.category(ch) == "So" or ch == "\ufe0f"
                                  or "\U0001f3fb" <= ch <= "\U0001f3ff")
         return pictographic(prev_c) and pictographic(next_c)
     return False
@@ -204,13 +204,14 @@ COLLOQUIAL_WORDS = {
     "برام", "بهم", "بهمون", "اصلا", "اصن", "چیه", "کیه", "کجاس", "اینه", "اونه",
     "نمیدونم", "میدونی", "میدونین", "ببین", "ببینین", "بگم", "بگین", "هستش",
     "اونجا", "اینجوری", "اونجوری", "چجوری", "چطوری", "خیلیا", "همهشون", "یکیش",
+    "تو",   # colloquial both as "you" and as "in" (formal: شما / در)
 }
 PERSONAL_WORDS = {
-    "من", "ما", "شما", "تو", "خودم", "خودمون", "خودت", "خودتون", "بهت",
-    "بهتون", "برات", "براتون", "برام", "بهم", "بهمون", "مال", "باهات", "باهاتون",
+    "من", "ما", "شما", "خودم", "خودمون", "خودت", "خودتون", "بهت",
+    "بهتون", "برات", "براتون", "برام", "بهم", "بهمون", "باهات", "باهاتون",
 }
 _FA = "\u0622-\u06cc"
-COLLOQ_VERB_RE = re.compile(f"^ن?(?:می|ب)[{_FA}]{{1,10}}(?:ه|ین|ن)$")
+COLLOQ_VERB_RE = re.compile(f"^ن?می[{_FA}]{{1,10}}(?:ه|ین|ن)$")
 PERSONAL_VERB_RE = re.compile(f"^ن?می[{_FA}]{{1,10}}(?:م|یم|ی|ین|ید)$")
 PAST_FIRST_RE = re.compile(f"^[{_FA}]{{2,}}(?:تم|دم|تیم|دیم)$")
 
@@ -220,7 +221,7 @@ def colloquial_count(text):
     for k in norm_words(text):
         if k in COLLOQUIAL_WORDS:
             n += 1
-        elif k.startswith("می") and k not in NOT_MI_VERB and COLLOQ_VERB_RE.match(k):
+        elif k not in NOT_MI_VERB and COLLOQ_VERB_RE.match(k):
             n += 1
     return n
 

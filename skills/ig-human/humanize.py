@@ -151,7 +151,7 @@ def pass_typographic(text, lex):
         if fa and ch == "—":
             to = "، "
         elif fa and ch in "“”":
-            to = "«" if ch == "“" else "»"
+            continue                      # paired below, in reading order
         hits.append({"name": f"{ch} {entry['name']}", "count": n, "to": to.strip() or "(space)"})
         if ch == "—":
             # " word — word " and "word—word" both collapse to a comma + space.
@@ -162,6 +162,14 @@ def pass_typographic(text, lex):
             text = text.replace("–", "-")
         else:
             text = text.replace(ch, to)
+    if fa and ("“" in text or "”" in text):
+        # Persian quotes are «». Writers and models put “ and ” on either side
+        # in right-to-left text, so pair them in reading order instead of
+        # trusting which one was typed: first is «, second is », and so on.
+        n = sum(text.count(c) for c in "“”")
+        hits.append({"name": "“” CURLY DOUBLE QUOTES", "count": n, "to": "«»"})
+        marks = iter("«»" * n)
+        text = re.sub("[“”]", lambda m: next(marks), text)
     if fa:
         for ch, name in (("ي", "ARABIC YEH"), ("ى", "ALEF MAKSURA"), ("ك", "ARABIC KAF")):
             n = text.count(ch)
@@ -171,7 +179,8 @@ def pass_typographic(text, lex):
         text = persian.fix_letters(text)
     # A comma inserted before existing punctuation reads wrong.
     text = re.sub(r"[,،]\s*([,.;:!?،؛؟])", r"\1", text)
-    text = re.sub(r"[,،]\s*\n", "\n", text)
+    # [ \t]*, not \s*: "word,\n\nNext" must keep its paragraph break.
+    text = re.sub(r"[,،][ \t]*\n", "\n", text)
     return text, hits
 
 
@@ -206,7 +215,7 @@ def pass_lexical(text, lex):
     text = re.sub(r"(?m)^[ \t]*(?:[,.;:،؛]+[ \t]*)+", "", text)
     text = re.sub(r"(?m)^[ \t](?=\S)", "", text)       # one space left by a deletion.
                                                       # Deeper indents are deliberate.
-    text = re.sub(r"[ \t]+([,.;:!?،؛؟])", r"\1", text)
+    text = re.sub(r"\s+([,.;:!?،؛؟])", r"\1", text)
     text = re.sub(r"[,،]\s*([,.;:!?،؛؟])", r"\1", text)  # an em dash became a comma,
                                                       # then the clause after it went
     text = text.replace("...", "\x00ELL\x00")          # protect real ellipses

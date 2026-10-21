@@ -62,7 +62,7 @@ def load_formulas(path):
     order = d.get("classify_order") or sorted(by_id)
     return [(by_id[i]["id"], by_id[i]["name"],
              re.compile(by_id[i]["match"], re.IGNORECASE),
-             re.compile(by_id[i]["match_fa"]) if by_id[i].get("match_fa") else None)
+             re.compile(by_id[i]["match_fa"], re.IGNORECASE) if by_id[i].get("match_fa") else None)
             for i in order if i in by_id]
 
 
@@ -85,12 +85,15 @@ MULTIPLIERS = {"k": 1e3, "m": 1e6, "b": 1e9, "هزار": 1e3, "میلیون": 1e
 def parse_count(cell):
     """'412,000', '412K', '1.2M', '۴۱۲ هزار', '۱٫۲ میلیون' -> int, or None."""
     text = persian.to_ascii_digits(cell or "").strip().lower()
+    text = re.sub(r"(?<=\d)[ \u00a0\u202f](?=\d{3}(?!\d))", "", text)    # 1 234 567
     m = re.match(r"^([\d,]*\.?\d+)\s*(k|m|b|هزار|میلیون|میلیارد)?", text)
     if not m:
         return None
     num, unit = m.group(1), m.group(2)
     if unit:
-        return int(round(float(num.replace(",", "")) * MULTIPLIERS[unit]))
+        # "1,2K" is a decimal comma, "1,200K" is a thousands separator.
+        num = num.replace(",", ".") if re.fullmatch(r"\d+,\d{1,2}", num) else num.replace(",", "")
+        return int(round(float(num) * MULTIPLIERS[unit]))
     digits = re.sub(r"[^\d]", "", num)
     return int(digits) if digits else None
 
